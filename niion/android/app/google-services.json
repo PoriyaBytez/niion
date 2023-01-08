@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "551920710860",
+    "project_id": "niion-6f0bf",
+    "storage_bucket": "niion-6f0bf.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:551920710860:android:fd1bc213736382a8ea7e69",
+        "android_client_info": {
+          "package_name": "com.niion"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "551920710860-db0v47b9ev9nfolvt3vo5ghehiemeksl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.niion",
+            "certificate_hash": "f004f360a4121c53ca39a400c384bfc6f45f09fc"
+          }
+        },
+        {
+          "client_id": "551920710860-ugfn704euh0h3rluoot90ngmtm09s551.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDALmKf56bErhqGpHqRVkA2ddASlR-ymDI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "551920710860-ugfn704euh0h3rluoot90ngmtm09s551.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
