@@ -1,6 +1,9 @@
 const apiKeyWeather = "73079826800d40478bf191604230501";
 const localDbName = "niion_app";
+const batteryRange = 100;
 
+const prefBatteryRange = "batteryRange";
+const initialLocVariation = 1; //Reset polyline is diff. bet. initial marker and 2nd marker is > 1Km
 // Day-3 (6 Hours)
 // var response = await postRequestList("https://api.weatherapi.com/v1/current.json", <String>["key",apiKeyWeather, "q", "Hyderabad"]);
 // log(response.body);

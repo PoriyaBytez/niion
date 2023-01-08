@@ -4,10 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:localstorage/localstorage.dart';
 import 'package:location/location.dart' as a;
-import 'package:niion/pojo/LatLon.dart';
 import 'package:niion/pojo/Weather.dart' as b;
 import 'package:permission_handler/permission_handler.dart';
 
@@ -155,10 +155,10 @@ Future<bool> handleLocationPermission(BuildContext context) async {
   return true;
 }
 
-Future<LatLon> getLoc() async {
+Future<LatLng> getLoc() async {
   var position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.best);
-  return LatLon(position.latitude, position.longitude);
+  return LatLng(position.latitude, position.longitude);
 }
 
 Future enableGPS() async {
@@ -168,4 +168,12 @@ Future enableGPS() async {
   } else {
     showToast("GPS Enabled!");
   }
+}
+
+resetBatteryRange() {
+  saveLocal(prefBatteryRange, batteryRange);
+}
+
+consumeBattery(double km) {
+  saveLocal(prefBatteryRange, getLocal(prefBatteryRange) - km);
 }
