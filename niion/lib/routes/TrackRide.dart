@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:niion/utils/Constants.dart';
-import 'package:niion/utils/Globals.dart';
+
+import '../utils/Globals.dart';
 
 class MapRoute extends StatefulWidget {
   const MapRoute({super.key, required this.pos});
@@ -19,8 +20,9 @@ class MapRoute extends StatefulWidget {
 class MapRouteState extends State<MapRoute> {
   final Completer<GoogleMapController> _controller = Completer();
   List<LatLng> polylineCoordinates = [];
-  LatLng? currentLocation;
+  LatLng? currentLocation, sourceLocation;
   double totalDistance = 0;
+  StreamSubscription<LocationData>? locationSubscription;
 
   void getCurrentLocation() async {
     Location location = Location();
@@ -31,50 +33,52 @@ class MapRouteState extends State<MapRoute> {
       },
     );
     GoogleMapController googleMapController = await _controller.future;
-    location.onLocationChanged.listen(
-      (newLoc) {
-        currentLocation = LatLng(newLoc.latitude!, newLoc.longitude!);
-        addPolyPoints(currentLocation!);
-        googleMapController.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(
-              zoom: 21,
-              target: LatLng(
-                newLoc.latitude!,
-                newLoc.longitude!,
-              ),
+    locationSubscription = location.onLocationChanged.listen((newLoc) {
+      currentLocation = LatLng(newLoc.latitude!, newLoc.longitude!);
+      addPolyPoints(currentLocation!);
+      googleMapController.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            zoom: 21,
+            target: LatLng(
+              newLoc.latitude!,
+              newLoc.longitude!,
             ),
           ),
-        );
-        setState(() {});
-      },
-    );
+        ),
+      );
+      setState(() {});
+    });
   }
 
   void addPolyPoints(LatLng latlon2) async {
     // Polyline has some element(s)
-    if (polylineCoordinates.isNotEmpty) {
+    if (polylineCoordinates.isEmpty) {
+      sourceLocation = latlon2;
+    } else {
       // Polyline has 1 or more elements
       double currentDistance =
           calculateDistance(getLastPolyLine(polylineCoordinates), latlon2);
-      if (currentDistance > initialLocVariation) {
+      if (currentDistance > initialLocVariation &&
+          polylineCoordinates.length == 1) {
+        print("Distz = ifcond $currentDistance");
         polylineCoordinates.clear();
+        sourceLocation = latlon2;
       } else {
-        totalDistance += currentDistance;
-        consumeBattery(currentDistance);
-        print("Distz = ${totalDistance.toStringAsFixed(2)}");
+        currentLocation = latlon2;
       }
+      print("Distz = else cond $currentDistance");
+      totalDistance += currentDistance;
+      consumeBattery(currentDistance);
+      print("Distz = ${totalDistance.toStringAsFixed(2)}");
     }
-    polylineCoordinates.add(
-      LatLng(latlon2.latitude, latlon2.longitude),
-    );
+    polylineCoordinates.add(latlon2);
     setState(() {});
   }
 
   LatLng getLastPolyLine(polyLineCoords) {
     if (polylineCoordinates.isNotEmpty) {
-      LatLng latLngLast = polylineCoordinates[polylineCoordinates.length - 1];
-      return LatLng(latLngLast.latitude, latLngLast.longitude);
+      return polylineCoordinates[polylineCoordinates.length - 1];
     } else {
       return const LatLng(0, 0);
     }
@@ -100,27 +104,27 @@ class MapRouteState extends State<MapRoute> {
 
   @override
   void dispose() {
-
+    locationSubscription?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    currentLocation = widget.pos;
-    addPolyPoints(currentLocation!);
+    // currentLocation = widget.pos;
+    // addPolyPoints(currentLocation!);
     var map = GoogleMap(
       initialCameraPosition: CameraPosition(
-        target:
-            LatLng(currentLocation!.latitude, currentLocation!.longitude),
+        target: currentLocation!,
         zoom: 21,
       ),
       markers: {
         Marker(
-          markerId: const MarkerId("currentLocation"),
-          position:
-              // currentLocation == null ? sourceLocation :
-              LatLng(currentLocation!.latitude, currentLocation!.longitude),
+          markerId: const MarkerId("sourceLocation"),
+          position: sourceLocation!,
         ),
+        Marker(
+            markerId: const MarkerId("currentLocation"),
+            position: currentLocation!),
       },
       onMapCreated: (mapController) {
         _controller.complete(mapController);

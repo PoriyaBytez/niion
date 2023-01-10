@@ -6,18 +6,14 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'package:localstorage/localstorage.dart';
+import 'package:intl/intl.dart';
 import 'package:location/location.dart' as a;
 import 'package:niion/pojo/Weather.dart' as b;
 import 'package:permission_handler/permission_handler.dart';
 
+import '../routes/TrackRide.dart';
+import '../routes/main.dart';
 import 'Constants.dart';
-
-dynamic storage;
-
-initFlutter() {
-  storage ??= LocalStorage(localDbName);
-}
 
 showToast(String message) {
   Fluttertoast.cancel();
@@ -38,18 +34,17 @@ showSnack(BuildContext context, String message) {
 
 showAlert(BuildContext context, bool cancelable, String title, String message) {
   // Create button
-  Widget okButton = FlatButton(
+  Widget okButton = ElevatedButton(
     child: const Text("OK"),
     onPressed: () {
       Navigator.of(context).pop();
     },
   );
 
-  Widget noButton = FlatButton(
+  Widget noButton = OutlinedButton(
     child: const Text("No"),
     onPressed: () {
       Navigator.of(context).pop();
-      showAlert(context, cancelable, title, message);
     },
   );
 
@@ -77,16 +72,23 @@ openScreen(BuildContext context, Widget widget) {
   );
 }
 
+openCloseScreen(BuildContext context, Widget widget) {
+  closeScreen(context);
+  openScreen(context, widget);
+}
+
 closeScreen(BuildContext context) {
   Navigator.pop(context);
 }
 
-dynamic getLocal(String key) {
-  return storage.getItem(key);
+dynamic getLocal(String key) async {
+  await storage.ready;
+  return await storage.getItem(key);
 }
 
-saveLocal(String key, var value) {
-  storage.setItem(key, value);
+saveLocal(String key, var value) async {
+  await storage.ready;
+  await storage.setItem(key, value);
 }
 
 Future<b.Weather?> getWeather(double lat, double lon) async {
@@ -170,10 +172,49 @@ Future enableGPS() async {
   }
 }
 
-resetBatteryRange() {
-  saveLocal(prefBatteryRange, batteryRange);
+void openTrackMapScreen(context) async {
+  if (!await handleLocationPermission(context)) {
+  } else {
+    openScreen(context, MapRoute(pos: await getLoc()));
+  }
 }
 
-consumeBattery(double km) {
-  saveLocal(prefBatteryRange, getLocal(prefBatteryRange) - km);
+resetBatteryRange() async {
+  await saveLocal(prefBatteryRange, batteryRange);
+  await saveLocal(prefBatteryResetTime, getDateTime(getTS()));
 }
+
+consumeBattery(double km) async {
+  await saveLocal(prefBatteryRange, await getLocal(prefBatteryRange) - km);
+}
+
+Future<String> getBatteryRange() async {
+  var d = await getLocal(prefBatteryRange);
+  return d.toStringAsFixed(2);
+}
+
+Future<String> getBatteryResetTime() async {
+  return await getLocal(prefBatteryResetTime);
+}
+
+Future<bool> isLoggedIn() async {
+  return await getLocal(prefIsLoggedIn) ?? false;
+}
+
+void setLoggedIn(value) async {
+  await saveLocal(prefIsLoggedIn, value);
+}
+
+int getTS() {
+  return DateTime.now().millisecondsSinceEpoch;
+}
+
+String getDateTime(int? localtimeEpoch) {
+  if (localtimeEpoch.toString().length <= 10) {
+    localtimeEpoch = localtimeEpoch! * 1000;
+  }
+  var dt = DateTime.fromMillisecondsSinceEpoch((localtimeEpoch!));
+  return DateFormat('dd MMM, hh:mm a').format(dt);
+}
+
+void logout() {}

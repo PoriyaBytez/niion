@@ -1,9 +1,34 @@
-const apiKeyWeather = "73079826800d40478bf191604230501";
+const appName = "Niion";
 const localDbName = "niion_app";
+const apiKeyWeather = "73079826800d40478bf191604230501";
 const batteryRange = 100;
+const batteryThreshold1 = 20;
+const batteryThreshold2 = 10;
+const double initialLocVariation =
+    1.0; //Reset polyline is diff. bet. initial marker and 2nd marker is > 1Km
 
+//config Data
+const contactNumber = "7879287257";
+const contactEmail = "support@Niion.in";
+const contactLatLon = "17.4223725,78.3342633";
+
+//URLs
+const weatherAPI = "https://api.weatherapi.com/v1/current.json";
+const shopOurProductsAPI = "https://niion.in/";
+const tncAPI = "https://niion.in/pages/terms-conditions";
+const ppAPI = "https://niion.in/pages/privacy-policy";
+const faqAPI = "https://niion.in/pages/faqs";
+const aboutUsAPI = "https://niion.in/pages/about-us";
+const whatsappAPI = "https://api.whatsapp.com/send/?phone=91$contactNumber&text=Hi";
+
+//Prefs
 const prefBatteryRange = "batteryRange";
-const initialLocVariation = 1; //Reset polyline is diff. bet. initial marker and 2nd marker is > 1Km
+const prefBatteryResetTime = "batteryResetTime";
+const prefIsLoggedIn = "isLoggedIn";
+const prefUserName = "userName";
+const prefUserEmail = "userEmail";
+const prefUserNumber = "userNumber";
+
 // Day-3 (6 Hours)
 // var response = await postRequestList("https://api.weatherapi.com/v1/current.json", <String>["key",apiKeyWeather, "q", "Hyderabad"]);
 // log(response.body);
@@ -40,10 +65,4 @@ const initialLocVariation = 1; //Reset polyline is diff. bet. initial marker and
 // openScreen(context, const SecondRoute());
 
 // Day-1 (6 Hours)
-// launchUrl(Uri.parse(Uri.encodeFull('google.navigation:q=17.5095778,78.4850147&mode=d')), mode: LaunchMode.externalApplication);
-// launchUrl(Uri.parse(Uri.encodeFull('https://google.com')), mode: LaunchMode.externalApplication);
-// launchUrl(Uri.parse(Uri.encodeFull('https://api.whatsapp.com/send/?phone=919666633200&text=Hi Friend')), mode: LaunchMode.externalApplication);
 // launchUrl(Uri.parse("tel://+917879287257"));
-// FlutterPhoneDirectCaller.callNumber("+917879287257");
-// FlutterEmailSender.send(Email(body: "Hi", subject: "Niion App Support",
-//   recipients: ["support@Niion.in"], isHTML: false,));
