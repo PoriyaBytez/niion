@@ -1,0 +1,3 @@
+class AlertIntface {
+  onClick() {}
+}

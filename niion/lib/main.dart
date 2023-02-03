@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:localstorage/localstorage.dart';
-import 'package:niion/routes/Dashboard.dart';
-import 'package:niion/utils/Globals.dart';
 
-import '../utils/Constants.dart';
+import 'Dashboard.dart';
+import 'Constants.dart';
+import 'Globals.dart';
 import 'SignUp.dart';
 
 dynamic storage;

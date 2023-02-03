@@ -8,12 +8,13 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:location/location.dart' as a;
-import 'package:niion/pojo/Weather.dart' as b;
+import 'package:niion/AlertIntface.dart';
+import 'package:niion/main.dart';
+import 'package:niion/pojo/WeatherPojo.dart' as b;
 import 'package:permission_handler/permission_handler.dart';
 
-import '../routes/TrackRide.dart';
-import '../routes/main.dart';
-import 'Constants.dart';
+import '../Constants.dart';
+import 'NotificationApi.dart';
 
 showToast(String message) {
   Fluttertoast.cancel();
@@ -38,6 +39,34 @@ showAlert(BuildContext context, bool cancelable, String title, String message) {
     child: const Text("OK"),
     onPressed: () {
       Navigator.of(context).pop();
+    },
+  );
+
+  // Create AlertDialog
+  AlertDialog alert = AlertDialog(
+    title: Text(title),
+    content: Text(message),
+    actions: [okButton],
+  );
+
+  // show the dialog
+  showDialog(
+    context: context,
+    barrierDismissible: cancelable,
+    builder: (BuildContext context) {
+      return alert;
+    },
+  );
+}
+
+showAlertIntFace(BuildContext context, bool cancelable, String title,
+    String message, AlertIntface alertIntface) {
+  // Create button
+  Widget okButton = ElevatedButton(
+    child: const Text("Yes"),
+    onPressed: () {
+      Navigator.of(context).pop();
+      alertIntface.onClick();
     },
   );
 
@@ -136,7 +165,7 @@ Future<bool> handleLocationPermission(BuildContext context) async {
   LocationPermission permission;
   serviceEnabled = await Geolocator.isLocationServiceEnabled();
   if (!serviceEnabled) {
-    showSnack(context, 'Location services are disabled! Please enable.');
+    showSnack(context, gpsMsg);
     enableGPS();
     return false;
   }
@@ -144,13 +173,12 @@ Future<bool> handleLocationPermission(BuildContext context) async {
   if (permission == LocationPermission.denied) {
     permission = await Geolocator.requestPermission();
     if (permission == LocationPermission.denied) {
-      showSnack(context, 'Location Permission Denied!');
+      showSnack(context, locationPermDenied);
       return false;
     }
   }
   if (permission == LocationPermission.deniedForever) {
-    showToast(
-        'Location Permission Permanently Denied! Please grant from Settings.');
+    showToast(locationPermRejected);
     openAppSettings();
     return false;
   }
@@ -172,25 +200,50 @@ Future enableGPS() async {
   }
 }
 
-void openTrackMapScreen(context) async {
-  if (!await handleLocationPermission(context)) {
-  } else {
-    openScreen(context, MapRoute(pos: await getLoc()));
-  }
-}
-
 resetBatteryRange() async {
   await saveLocal(prefBatteryRange, batteryRange);
   await saveLocal(prefBatteryResetTime, getDateTime(getTS()));
+  await saveLocal(prefBatteryThresholdState, 0);
 }
 
-consumeBattery(double km) async {
-  await saveLocal(prefBatteryRange, await getLocal(prefBatteryRange) - km);
+Future<void> consumeBattery(double km) async {
+  var range = await getLocal(prefBatteryRange) - km;
+  if (range < 0) range = 0;
+  await saveLocal(prefBatteryRange, range);
+  var localSlab = await getLocal(prefBatteryThresholdState);
+  var currentSlab =
+      (range > batteryThreshold1) ? 0 : ((range > batteryThreshold2) ? 1 : 2);
+  if (localSlab != currentSlab) {
+    await saveLocal(prefBatteryThresholdState, currentSlab);
+    if (currentSlab > 0 && !(localSlab == 2 && currentSlab == 1)) {
+      showBatteryNtfc(range);
+    }
+  }
+}
+
+void showBatteryNtfc(var range) {
+  // String title = "Battery${(currentSlab > 1) ? " Critically" : ""} Low";
+  String title = "Battery Alert";
+  // String body = "${range.toStringAsFixed(2)} Km Left. Please charge now!";
+  double km = range.toStringAsFixed(2);
+  String body =
+      "You have less than $km km${km > 1 ? 's' : ''} of battery remaining. Please charge your battery.";
+  NotificationApi.showNtfc(title: title, body: body, payload: 'nik.red');
+}
+
+void showAlertIfBatteryLess() async {
+  var range = await getLocal(prefBatteryRange);
+  if (range < batteryThreshold1) {
+    showBatteryNtfc(range);
+  }
 }
 
 Future<String> getBatteryRange() async {
-  var d = await getLocal(prefBatteryRange);
-  return d.toStringAsFixed(2);
+  return shrinkDecimal(await getLocal(prefBatteryRange), 2);
+}
+
+String shrinkDecimal(var s, int count) {
+  return s.toStringAsFixed(count);
 }
 
 Future<String> getBatteryResetTime() async {
@@ -210,11 +263,30 @@ int getTS() {
 }
 
 String getDateTime(int? localtimeEpoch) {
+  localtimeEpoch ??= getTS();
   if (localtimeEpoch.toString().length <= 10) {
-    localtimeEpoch = localtimeEpoch! * 1000;
+    localtimeEpoch = localtimeEpoch * 1000;
   }
-  var dt = DateTime.fromMillisecondsSinceEpoch((localtimeEpoch!));
+  var dt = DateTime.fromMillisecondsSinceEpoch((localtimeEpoch));
   return DateFormat('dd MMM, hh:mm a').format(dt);
 }
 
-void logout() {}
+String getTimeFromSeconds(int seconds) {
+  return '${(Duration(seconds: seconds))}'.split('.')[0].padLeft(8, '0');
+}
+
+Future<void> logout() async {
+  await storage.clear();
+}
+
+double _electricEmission(double km) {
+  return km * eEmissionFactor;
+}
+
+double _fossilEmission(double km) {
+  return km * pEmissionFactor;
+}
+
+double carbonSavings(double km) {
+  return _fossilEmission(km) - _electricEmission(km);
+}

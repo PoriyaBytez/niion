@@ -12,7 +12,7 @@ import Flutter
     if #available(iOS 10.0, *) {
       UNUserNotificationCenter.current().delegate = self as? UNUserNotificationCenterDelegate
     }
-    GMSServices.provideAPIKey("YOUR KEY HERE")
+//    GMSServices.provideAPIKey("YOUR KEY HERE")
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }

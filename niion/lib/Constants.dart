@@ -1,13 +1,31 @@
+//General Config Data
 const appName = "Niion";
 const localDbName = "niion_app";
+
+//API Keys
 const apiKeyWeather = "73079826800d40478bf191604230501";
-const batteryRange = 100;
-const batteryThreshold1 = 20;
+
+//Battery Constants
+const batteryRange = 25;
+const batteryThreshold1 = 15;
 const batteryThreshold2 = 10;
+const ischarging = true;
 const double initialLocVariation =
     1.0; //Reset polyline is diff. bet. initial marker and 2nd marker is > 1Km
 
-//config Data
+//Formulae Constants
+//E-Kit Energy Consumption
+const double eKEC = 0.011;
+//Indian Electricity Emissions Factor
+const double iEEF = 0.85;
+const double eEmissionFactor = eKEC * iEEF;
+//Petrol Energy Consumption
+const double avgMileage = 60;
+//Indian Petrol Emissions Factor
+const double iPEF = 2.3;
+const double pEmissionFactor = iPEF / avgMileage;
+
+//Help & Support
 const contactNumber = "7879287257";
 const contactEmail = "support@Niion.in";
 const contactLatLon = "17.4223725,78.3342633";
@@ -19,16 +37,27 @@ const tncAPI = "https://niion.in/pages/terms-conditions";
 const ppAPI = "https://niion.in/pages/privacy-policy";
 const faqAPI = "https://niion.in/pages/faqs";
 const aboutUsAPI = "https://niion.in/pages/about-us";
-const whatsappAPI = "https://api.whatsapp.com/send/?phone=91$contactNumber&text=Hi";
+const whatsappAPI =
+    "https://api.whatsapp.com/send/?phone=91$contactNumber&text=Hi";
+
+//Social Media
+const facebookPage = "https://www.facebook.com";
+const instaPage = "https://www.instagram.com";
+const twitterPage = "https://www.twitter.com";
 
 //Prefs
 const prefBatteryRange = "batteryRange";
 const prefBatteryResetTime = "batteryResetTime";
+const prefBatteryThresholdState = "batteryThresholdState";
 const prefIsLoggedIn = "isLoggedIn";
 const prefUserName = "userName";
 const prefUserEmail = "userEmail";
 const prefUserNumber = "userNumber";
 
+//String Constants
+const gpsMsg = "Location services are disabled! Please enable to accurately show your rides and weather information.";
+const locationPermDenied = "Location Permission Denied! Please enable to accurately show your rides and weather information.";
+const locationPermRejected = "Location Permission Permanently Denied! Please grant from Settings to accurately show your rides and weather information.";
 // Day-3 (6 Hours)
 // var response = await postRequestList("https://api.weatherapi.com/v1/current.json", <String>["key",apiKeyWeather, "q", "Hyderabad"]);
 // log(response.body);
@@ -66,3 +95,13 @@ const prefUserNumber = "userNumber";
 
 // Day-1 (6 Hours)
 // launchUrl(Uri.parse("tel://+917879287257"));
+
+// Navigator.push(
+// context,
+// MaterialPageRoute(
+// builder: (context) => SecondPage(),
+// ),
+// ).then((value) {
+// _refreshFirstPage();
+// });
+//https://www.youtube.com/watch?v=bRy5dmts3X8

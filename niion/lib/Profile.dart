@@ -1,22 +1,39 @@
 import 'package:flutter/material.dart';
-import 'package:niion/routes/Dashboard.dart';
-import 'package:niion/utils/Constants.dart';
+import 'package:niion/Constants.dart';
 
-import '../utils/Globals.dart';
+import 'Globals.dart';
 
-class SignUp extends StatefulWidget {
-  const SignUp({Key? key}) : super(key: key);
+var userName = "", userEmail = "", userNumber = "";
+
+class Profile extends StatefulWidget {
+  const Profile({Key? key}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
-    return _SignUpState();
+    return _ProfileState();
   }
 }
 
-class _SignUpState extends State<SignUp> {
+class _ProfileState extends State<Profile> {
   var nameController = TextEditingController();
   var emailController = TextEditingController();
   var numberController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    initUI();
+  }
+
+  void initUI() async {
+    userName = await getLocal(prefUserName);
+    userEmail = await getLocal(prefUserEmail);
+    userNumber = await getLocal(prefUserNumber);
+    nameController.text = userName;
+    emailController.text = userEmail;
+    numberController.text = userNumber;
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,9 +51,10 @@ class _SignUpState extends State<SignUp> {
               Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   child: Text(
-                    'Register',
+                    'Profile',
                     style: TextStyle(
                         fontSize: 30,
+                        decoration: TextDecoration.underline,
                         color: Colors.blue.shade600,
                         fontWeight: FontWeight.bold),
                   )),
@@ -49,7 +67,7 @@ class _SignUpState extends State<SignUp> {
                     textCapitalization: TextCapitalization.words,
                     textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
-                        border: OutlineInputBorder(), labelText: 'Enter Name'),
+                        border: OutlineInputBorder(), labelText: 'Name'),
                   )),
               Padding(
                   padding: const EdgeInsets.symmetric(vertical: 5),
@@ -59,7 +77,7 @@ class _SignUpState extends State<SignUp> {
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
-                        border: OutlineInputBorder(), labelText: 'Enter Email'),
+                        border: OutlineInputBorder(), labelText: 'Email'),
                   )),
               Padding(
                   padding: const EdgeInsets.symmetric(vertical: 5),
@@ -69,20 +87,17 @@ class _SignUpState extends State<SignUp> {
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.done,
                     decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: 'Enter Number'),
+                        border: OutlineInputBorder(), labelText: 'Number'),
                   )),
               ElevatedButton(
                   onPressed: () {
                     saveLocal(prefUserName, nameController.text.toString());
                     saveLocal(prefUserEmail, emailController.text.toString());
                     saveLocal(prefUserNumber, numberController.text.toString());
-                    setLoggedIn(true);
-                    showToast("Registration Done");
-                    resetBatteryRange();
-                    openCloseScreen(context, const Dashboard());
+                    showToast("Updated Profile Successfully");
+                    closeScreen(context);
                   },
-                  child: const Text('SignUp'))
+                  child: const Text('Update'))
             ],
           ),
         ),
