@@ -37,7 +37,8 @@ class RidesDatabase {
     ${RideFields.avgSpeed} $doubleType, 
     ${RideFields.carbonSavings} $doubleType, 
     ${RideFields.polylines} $textTypeNull, 
-    ${RideFields.createdTime} $numberType 
+    ${RideFields.createdTime} $numberType, 
+    ${RideFields.address} $textTypeNull 
     )
     ''');
 

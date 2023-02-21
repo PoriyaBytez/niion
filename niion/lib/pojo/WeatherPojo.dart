@@ -32,18 +32,22 @@ class Current {
   Current({
     this.tempC,
     this.condition,
+    this.is_day,
   });
 
   double? tempC;
+  int? is_day;
   Condition? condition;
 
   factory Current.fromJson(Map<String, dynamic> json) => Current(
     tempC: json["temp_c"],
+    is_day: json["is_day"],
     condition: Condition.fromJson(json["condition"]),
   );
 
   Map<String, dynamic> toJson() => {
     "temp_c": tempC,
+    "is_day": is_day,
     "condition": condition!.toJson(),
   };
 }

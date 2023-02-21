@@ -268,10 +268,11 @@ String getDateTime(int? localtimeEpoch) {
     localtimeEpoch = localtimeEpoch * 1000;
   }
   var dt = DateTime.fromMillisecondsSinceEpoch((localtimeEpoch));
-  return DateFormat('dd MMM, hh:mm a').format(dt);
+  return DateFormat('dd MMM yyyy').format(dt);
+  // return DateFormat('dd MM, hh:mm a').format(dt);
 }
 
-String getTimeFromSeconds(int seconds) {
+String  getTimeFromSeconds(int seconds) {
   return '${(Duration(seconds: seconds))}'.split('.')[0].padLeft(8, '0');
 }
 

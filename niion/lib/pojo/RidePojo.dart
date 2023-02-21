@@ -11,6 +11,7 @@ class RideFields {
   static const String carbonSavings = 'carbonSavings';
   static const String polylines = 'polylines';
   static const String createdTime = 'createdTime';
+  static const String address = 'address';
 
   static const String ride_id = 'ride_id';
   static const String ride_lat = 'ride_lat';
@@ -23,7 +24,7 @@ class RideFields {
     avgSpeed,
     carbonSavings,
     polylines,
-    createdTime,
+    createdTime,address
   ];
 
   static final List<String> tbPolylineColumns = [
@@ -37,6 +38,7 @@ class RidePojo {
   final int? id, duration, createdTime;
   final double distance, avgSpeed, carbonSavings;
   final List<LatLng> polylines;
+  final String address ;
 
   const RidePojo({
     this.id,
@@ -46,6 +48,7 @@ class RidePojo {
     required this.carbonSavings,
     required this.polylines,
     required this.createdTime,
+    required this.address,
   });
 
   RidePojo copy(
@@ -55,7 +58,7 @@ class RidePojo {
           required double avgSpeed,
           required double carbonSavings,
           required List<LatLng> polylines,
-          required int createdTime}) =>
+          required int createdTime ,required String address}) =>
       RidePojo(
         id: id ?? this.id,
         duration: duration,
@@ -64,6 +67,7 @@ class RidePojo {
         carbonSavings: carbonSavings,
         polylines: polylines,
         createdTime: createdTime,
+        address: address,
       );
 
   static RidePojo fromJson(
@@ -82,7 +86,8 @@ class RidePojo {
         avgSpeed: jsonRide[RideFields.avgSpeed] as double,
         carbonSavings: jsonRide[RideFields.carbonSavings] as double,
         polylines: polylines,
-        createdTime: jsonRide[RideFields.createdTime] as int);
+        createdTime: jsonRide[RideFields.createdTime] as int,
+        address: jsonRide[RideFields.address] as String);
   }
 
   Map<String, Object?> toJson() => {
@@ -92,5 +97,6 @@ class RidePojo {
         RideFields.avgSpeed: avgSpeed,
         RideFields.carbonSavings: carbonSavings,
         RideFields.createdTime: createdTime,
+        RideFields.address: address,
       };
 }
