@@ -2,6 +2,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 const String tableRides = 'rides';
 const String tablePolylines = 'polylines';
+const String tableNotification = 'notification';
 
 class RideFields {
   static const String id = '_id';
@@ -16,6 +17,8 @@ class RideFields {
   static const String ride_id = 'ride_id';
   static const String ride_lat = 'ride_lat';
   static const String ride_lon = 'ride_lon';
+
+  static const String message = 'message';
 
   static final List<String> tbRideColumns = [
     id,
@@ -32,6 +35,39 @@ class RideFields {
     ride_lat,
     ride_lon,
   ];
+}
+
+class NotificationPojo{
+   int? id;
+   int? createdTime;
+   String? message;
+
+   NotificationPojo({ this.id,this.createdTime, this.message});
+
+
+   NotificationPojo copy(
+       {int? id, required int createdTime ,required String message}) =>
+       NotificationPojo(
+         id: id ?? this.id,
+         createdTime: createdTime,
+         message: message,
+       );
+
+   static NotificationPojo fromJson(
+       Map<String, Object?> jsonRide, List<Map<String, Object?>>? jsonPolyline) {
+     return NotificationPojo(
+         id: jsonRide[RideFields.id] as int?,
+         createdTime: jsonRide[RideFields.createdTime] as int,
+         message: jsonRide[RideFields.message] as String);
+   }
+
+
+   Map<String, Object?> toJson() => {
+     RideFields.id :id,
+     RideFields.createdTime: createdTime,
+     RideFields.message: message,
+   };
+
 }
 
 class RidePojo {

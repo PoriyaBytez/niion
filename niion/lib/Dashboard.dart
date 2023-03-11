@@ -6,10 +6,12 @@ import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:gradient_widgets/gradient_widgets.dart';
 import 'package:intl/intl.dart';
+import 'package:niion/NotificatiList.dart';
 import 'package:niion/RideDetails.dart';
 import 'package:niion/pojo/RidePojo.dart';
 import 'package:niion/pojo/WeatherPojo.dart';
 import 'package:niion/Constants.dart';
+import 'package:niion/start_ride/dialog_location.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'Globals.dart';
@@ -18,6 +20,7 @@ import 'RidesDatabase.dart';
 import '../ContactUs.dart';
 import 'Profile.dart';
 import 'RideHistory.dart';
+import 'SignUp.dart';
 import 'Test.dart';
 import 'Test1.dart';
 import 'TrackRide.dart';
@@ -29,8 +32,11 @@ var userName = "",
     userEmail = "",
     userNumber = "",
     _batteryRange = "",
-    _batteryResetTime = "Never";
+    _batteryResetTime = "",
+    locationDialog = "",
+    _batteryTime = "Never";
 Weather? weather;
+String weatherDialog = "";
 
 class Dashboard extends StatefulWidget {
   const Dashboard({Key? key}) : super(key: key);
@@ -42,6 +48,9 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
+  late List splitted;
+  bool isDiaload = false;
+
   @override
   void initState() {
     super.initState();
@@ -52,20 +61,32 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
   }
 
   void initUI() async {
+    weatherDialog = await getLocal(weatherDialogKEY);
     userName = await getLocal(prefUserName);
     fetchBattery();
+
+    // print("weatherDialog ${weatherDialog}");
+    // if (weatherDialog == "") {
+    //   setState(() {
+    //     isDiaload = true;
+    //   });
+    // } else {
     if (await handleLocationPermission(context)) {
       Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
       weather = await getWeather(position.latitude, position.longitude);
       print('qwedwed https:${weather?.current?.condition?.icon}');
       setState(() {});
+      // }
     }
   }
+
+  String day = "";
 
   Future<void> fetchBattery() async {
     _batteryRange = await getBatteryRange();
     _batteryResetTime = await getBatteryResetTime();
+    _batteryTime = await getBatteryTime();
     setState(() {});
   }
 
@@ -91,18 +112,20 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
 
   double totalCO2 = 0.0;
   double totalDistance = 0.0;
+  DateTime? dateTime;
 
   Future fetchRides() async {
     rides = await RidesDatabase.instance.getAllRides();
+    dateTime = DateTime.fromMillisecondsSinceEpoch(rides[0].createdTime!);
     for (int i = 0; i < rides.length; i++) {
-      // print("carbonSavings : ${rides[i].carbonSavings}");
+      print("carbonSavings : ${rides[i].carbonSavings}");
       print("distance : ${rides[i].distance}");
       totalDistance = totalDistance + rides[i].distance;
       totalCO2 = totalCO2 + rides[i].carbonSavings;
       // print("CO2 ${totalCO2}");
       print("Distance+++ ${totalDistance}");
     }
-    // print("totalCO2 ${totalCO2}");
+    print("totalCO2 ${totalCO2}");
     print("totalDistance ${totalDistance}");
     setState(() {});
   }
@@ -119,6 +142,7 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    splitted = userName.split(' ');
     return Scaffold(
       key: scaffoldKey,
       backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
@@ -139,564 +163,640 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
       ),
       drawer: const SideDrawer(),
       body: SafeArea(
-        child: GestureDetector(
-          onTap: () => FocusScope.of(context).requestFocus(_unfocusNode),
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Color(0xFFF1F4F8),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Align(
-                      alignment: AlignmentDirectional(0, -0.45),
-                      child: Padding(
-                        padding: EdgeInsetsDirectional.fromSTEB(16, 44, 16, 0),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            FlutterFlowIconButton(
-                              borderColor: Colors.transparent,
-                              borderRadius: 30,
-                              borderWidth: 1,
-                              buttonSize: 44,
-                              icon: Icon(
-                                Icons.menu_rounded,
-                                color: Color(0xFF101213),
-                                size: 24,
-                              ),
-                              onPressed: () {
-                                print('IconButton pressed ...');
-                                scaffoldKey.currentState?.openDrawer();
-                              },
-                            ),
-                            Text(
-                              'Hello,',
-                              style:
-                                  FlutterFlowTheme.of(context).title1.override(
+        child: Stack(
+          children: [
+            GestureDetector(
+              onTap: () => FocusScope.of(context).requestFocus(_unfocusNode),
+              child: ListView(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Color(0xFFF1F4F8),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.max,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Align(
+                          alignment: AlignmentDirectional(0, -0.45),
+                          child: Padding(
+                            padding:
+                                EdgeInsetsDirectional.fromSTEB(16, 44, 16, 0),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.max,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                FlutterFlowIconButton(
+                                  borderColor: Colors.transparent,
+                                  borderRadius: 30,
+                                  borderWidth: 1,
+                                  buttonSize: 44,
+                                  icon: Icon(
+                                    Icons.menu_rounded,
+                                    color: Color(0xFF101213),
+                                    size: 24,
+                                  ),
+                                  onPressed: () {
+                                    print('IconButton pressed ...');
+                                    scaffoldKey.currentState?.openDrawer();
+                                  },
+                                ),
+                                Text(
+                                  'Hello,',
+                                  style: FlutterFlowTheme.of(context)
+                                      .title1
+                                      .override(
                                         fontFamily: 'Outfit',
                                         color: Color(0xFF101213),
                                         fontSize: 32,
                                         fontWeight: FontWeight.normal,
                                       ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(
+                                      2, 0, 0, 0),
+                                  child: Text(
+                                    '${splitted[0]}',
+                                    style: FlutterFlowTheme.of(context)
+                                        .title1
+                                        .override(
+                                          fontFamily: 'Outfit',
+                                          color: Color(0xFF4B39EF),
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            Padding(
-                              padding:
-                                  EdgeInsetsDirectional.fromSTEB(2, 0, 0, 0),
-                              child: Text(
-                                'Maverick',
-                                style: FlutterFlowTheme.of(context)
-                                    .title1
-                                    .override(
-                                      fontFamily: 'Outfit',
-                                      color: Color(0xFF4B39EF),
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsetsDirectional.fromSTEB(20, 12, 20, 12),
-                      child: Container(
-                        width: double.infinity,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                              blurRadius: 4,
-                              color: Color(0x34090F13),
-                              offset: Offset(0, 2),
-                            )
-                          ],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.max,
-                          children: [
-                            Padding(
-                              padding:
-                                  EdgeInsetsDirectional.fromSTEB(10, 0, 0, 0),
-                              child: Image.asset(
-                                'assets/images/Weather.png',
-                                width: 100,
-                                height: 100,
-                                fit: BoxFit.contain,
-                              ),
+                        Padding(
+                          padding:
+                              EdgeInsetsDirectional.fromSTEB(20, 12, 20, 12),
+                          child: Container(
+                            width: double.infinity,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              boxShadow: [
+                                BoxShadow(
+                                  blurRadius: 4,
+                                  color: Color(0x34090F13),
+                                  offset: Offset(0, 2),
+                                )
+                              ],
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            Padding(
-                              padding:
-                                  EdgeInsetsDirectional.fromSTEB(12, 8, 12, 8),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisSize: MainAxisSize.max,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.max,
+                              children: [
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(
+                                      10, 0, 0, 0),
+                                  child: Image.asset(
+                                    'assets/images/Weather.png',
+                                    width: 100,
+                                    height: 100,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
+                                      Row(
+                                        children: [
+                                          Padding(
+                                            padding:
+                                                EdgeInsetsDirectional.fromSTEB(
+                                                    0, 0, 10, 0),
+                                            child: Text(
+                                              "${weather?.current?.tempC ?? ""}° C",
+                                              style:
+                                                  FlutterFlowTheme.of(context)
+                                                      .bodyText1
+                                                      .override(
+                                                        fontFamily: 'Poppins',
+                                                        fontSize: 18,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                            ),
+                                          ),
+                                          Text(
+                                            "${weather?.current?.condition?.text ?? ""}",
+                                            overflow: TextOverflow.clip,
+                                            maxLines: 1,
+                                            style: FlutterFlowTheme.of(context)
+                                                .bodyText1,
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            '${DateFormat('EEEE').format(DateTime.now())}, ',
+                                            style: FlutterFlowTheme.of(context)
+                                                .subtitle1
+                                                .override(
+                                                  fontFamily: 'Outfit',
+                                                  color: FlutterFlowTheme.of(
+                                                          context)
+                                                      .alternate,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.normal,
+                                                ),
+                                          ),
+                                          Text(
+                                            '${getDateTime(weather?.location?.localtimeEpoch)}',
+                                            style: FlutterFlowTheme.of(context)
+                                                .subtitle1
+                                                .override(
+                                                  fontFamily: 'Outfit',
+                                                  color: FlutterFlowTheme.of(
+                                                          context)
+                                                      .alternate,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.normal,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
                                       Padding(
                                         padding: EdgeInsetsDirectional.fromSTEB(
-                                            0, 0, 10, 0),
+                                            0, 4, 0, 0),
                                         child: Text(
-                                          "${weather?.current?.tempC ?? ""}°",
+                                          '${weather?.location?.name ?? ""}, ${weather?.location?.region ?? ""}',
                                           style: FlutterFlowTheme.of(context)
-                                              .bodyText1
+                                              .bodyText2
                                               .override(
-                                                fontFamily: 'Poppins',
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w600,
+                                                fontFamily: 'Outfit',
+                                                color: Color(0xFF57636C),
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w200,
                                               ),
                                         ),
                                       ),
-                                      Text(
-                                        "${weather?.current?.condition?.text ?? ""}",
-                                        style: FlutterFlowTheme.of(context)
-                                            .bodyText1,
-                                      ),
                                     ],
                                   ),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        '${DateFormat('EEEE').format(DateTime.now())}, ',
-                                        style: FlutterFlowTheme.of(context)
-                                            .subtitle1
-                                            .override(
-                                              fontFamily: 'Outfit',
-                                              color:
-                                                  FlutterFlowTheme.of(context)
-                                                      .alternate,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.normal,
-                                            ),
-                                      ),
-                                      Text(
-                                        '${getDateTime(weather?.location?.localtimeEpoch)}',
-                                        style: FlutterFlowTheme.of(context)
-                                            .subtitle1
-                                            .override(
-                                              fontFamily: 'Outfit',
-                                              color:
-                                                  FlutterFlowTheme.of(context)
-                                                      .alternate,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.normal,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        0, 4, 0, 0),
-                                    child: Text(
-                                      '${weather?.location?.name ?? ""}, ${weather?.location?.region ?? ""}',
-                                      style: FlutterFlowTheme.of(context)
-                                          .bodyText2
-                                          .override(
-                                            fontFamily: 'Outfit',
-                                            color: Color(0xFF57636C),
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w200,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsetsDirectional.fromSTEB(20, 12, 20, 12),
+                    child: Container(
+                      width: double.infinity,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            blurRadius: 4,
+                            color: Color(0x34090F13),
+                            offset: Offset(0, 2),
+                          )
+                        ],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Stack(
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.max,
+                            children: [
+                              Padding(
+                                padding:
+                                    EdgeInsetsDirectional.fromSTEB(10, 0, 0, 0),
+                                child: Image.asset(
+                                  'assets/images/co2savings.png',
+                                  width: 100,
+                                  height: 100,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                              Padding(
+                                padding: EdgeInsetsDirectional.fromSTEB(
+                                    12, 8, 12, 8),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.max,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisSize: MainAxisSize.max,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              EdgeInsetsDirectional.fromSTEB(
+                                                  0, 0, 10, 0),
+                                          child: Text(
+                                            '${totalCO2.toStringAsFixed(2)} kg CO2',
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
+                                            style: FlutterFlowTheme.of(context)
+                                                .bodyText1
+                                                .override(
+                                                  fontFamily: 'Poppins',
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
                                           ),
+                                        ),
+                                        Text(
+                                          'Savings',
+                                          style: FlutterFlowTheme.of(context)
+                                              .bodyText2
+                                              .override(
+                                                fontFamily: 'Poppins',
+                                                fontWeight: FontWeight.w200,
+                                              ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
+                                    Row(
+                                      mainAxisSize: MainAxisSize.max,
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              EdgeInsetsDirectional.fromSTEB(
+                                                  0, 0, 10, 0),
+                                          child: Text(
+                                            '${totalDistance.toStringAsFixed(2)} kms',
+                                            style: FlutterFlowTheme.of(context)
+                                                .subtitle1
+                                                .override(
+                                                  fontFamily: 'Outfit',
+                                                  color: FlutterFlowTheme.of(
+                                                          context)
+                                                      .alternate,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.normal,
+                                                ),
+                                          ),
+                                        ),
+                                        Text(
+                                          'Green Rides',
+                                          style: FlutterFlowTheme.of(context)
+                                              .bodyText2
+                                              .override(
+                                                fontFamily: 'Poppins',
+                                                fontWeight: FontWeight.w200,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          Align(
+                            alignment: Alignment.topRight,
+                            child: Padding(
+                              padding:
+                                  EdgeInsetsDirectional.fromSTEB(0, 0, 0, 80),
+                              child: FlutterFlowIconButton(
+                                borderColor: Colors.transparent,
+                                borderRadius: 1,
+                                borderWidth: 1,
+                                buttonSize: 40,
+                                icon: Icon(
+                                  Icons.info_outlined,
+                                  color: Color(0xFF7C868D),
+                                  size: 18,
+                                ),
+                                onPressed: () async {
+                                  await showDialog(
+                                    context: context,
+                                    builder: (alertDialogContext) {
+                                      return AlertDialog(
+                                        title: Text('Carbon Savings'),
+                                        content: Text(
+                                            'Carbon savings are indicative for equivalent ride with a petrol 2-wheeler such as Activa. This value can be affected by factors such as the riders and bike’s weight, aerodynamics, and rider behavior. This value is not fixed, and it can change depending on the way the scooter/bike is ridden and maintained.'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(
+                                                alertDialogContext),
+                                            child: Text('Close'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(20, 12, 20, 12),
-                child: Container(
-                  width: double.infinity,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        blurRadius: 4,
-                        color: Color(0x34090F13),
-                        offset: Offset(0, 2),
-                      )
-                    ],
-                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Stack(
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.max,
+                  Padding(
+                    padding: EdgeInsetsDirectional.fromSTEB(20, 12, 20, 12),
+                    child: Container(
+                      width: double.infinity,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            blurRadius: 4,
+                            color: Color(0x34090F13),
+                            offset: Offset(0, 2),
+                          )
+                        ],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Stack(
                         children: [
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(10, 0, 0, 0),
-                            child: Image.asset(
-                              'assets/images/co2savings.png',
-                              width: 100,
-                              height: 100,
-                              fit: BoxFit.contain,
-                            ),
+                          Row(
+                            mainAxisSize: MainAxisSize.max,
+                            children: [
+                              Padding(
+                                padding:
+                                    EdgeInsetsDirectional.fromSTEB(10, 0, 0, 0),
+                                child: Image.asset(
+                                  'assets/images/batterynew.png',
+                                  width: 100,
+                                  height: 100,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                              Padding(
+                                padding: EdgeInsetsDirectional.fromSTEB(
+                                    12, 8, 12, 8),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.max,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisSize: MainAxisSize.max,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              EdgeInsetsDirectional.fromSTEB(
+                                                  0, 0, 10, 0),
+                                          child: Text(
+                                            '$_batteryRange Kms',
+                                            style: FlutterFlowTheme.of(context)
+                                                .bodyText1
+                                                .override(
+                                                  fontFamily: 'Poppins',
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                          ),
+                                        ),
+                                        Text(
+                                          'Remaining',
+                                          style: FlutterFlowTheme.of(context)
+                                              .bodyText2
+                                              .override(
+                                                fontFamily: 'Poppins',
+                                                fontWeight: FontWeight.w200,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.max,
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              EdgeInsetsDirectional.fromSTEB(
+                                                  0, 0, 10, 0),
+                                          child: Text(
+                                            '$_batteryTime',
+                                            style: FlutterFlowTheme.of(context)
+                                                .subtitle1
+                                                .override(
+                                                  fontFamily: 'Outfit',
+                                                  color: FlutterFlowTheme.of(
+                                                          context)
+                                                      .alternate,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.normal,
+                                                ),
+                                          ),
+                                        ),
+                                        Text(
+                                          'Last Reset',
+                                          style: FlutterFlowTheme.of(context)
+                                              .bodyText2
+                                              .override(
+                                                fontFamily: 'Poppins',
+                                                fontWeight: FontWeight.w200,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.max,
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              EdgeInsetsDirectional.fromSTEB(
+                                                  0, 0, 10, 0),
+                                          child: Text(
+                                            '$_batteryResetTime',
+                                            style: FlutterFlowTheme.of(context)
+                                                .subtitle1
+                                                .override(
+                                                  fontFamily: 'Outfit',
+                                                  color: FlutterFlowTheme.of(
+                                                          context)
+                                                      .alternate,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.normal,
+                                                ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(12, 8, 12, 8),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsetsDirectional.fromSTEB(
-                                          0, 0, 10, 0),
-                                      child: Text(
-                                        '${totalCO2.toStringAsFixed(2)} kms',
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
-                                        style: FlutterFlowTheme.of(context)
-                                            .bodyText1
-                                            .override(
-                                              fontFamily: 'Poppins',
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                      ),
-                                    ),
-                                    Text(
-                                      'Savings',
-                                      style: FlutterFlowTheme.of(context)
-                                          .bodyText2
-                                          .override(
-                                            fontFamily: 'Poppins',
-                                            fontWeight: FontWeight.w200,
-                                          ),
-                                    ),
-                                  ],
+                          Align(
+                            alignment: Alignment.topRight,
+                            child: Padding(
+                              padding:
+                                  EdgeInsetsDirectional.fromSTEB(0, 0, 0, 80),
+                              child: FlutterFlowIconButton(
+                                borderColor: Colors.transparent,
+                                borderRadius: 1,
+                                borderWidth: 1,
+                                buttonSize: 40,
+                                icon: Icon(
+                                  Icons.info_outlined,
+                                  color: Color(0xFF7C868D),
+                                  size: 18,
                                 ),
-                                Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsetsDirectional.fromSTEB(
-                                          0, 0, 10, 0),
-                                      child: Text(
-                                        '${totalDistance.toStringAsFixed(2)} kms',
-                                        style: FlutterFlowTheme.of(context)
-                                            .subtitle1
-                                            .override(
-                                              fontFamily: 'Outfit',
-                                              color: FlutterFlowTheme.of(context)
-                                                  .alternate,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.normal,
-                                            ),
-                                      ),
-                                    ),
-                                    Text(
-                                      'Green Rides',
-                                      style: FlutterFlowTheme.of(context)
-                                          .bodyText2
-                                          .override(
-                                            fontFamily: 'Poppins',
-                                            fontWeight: FontWeight.w200,
+                                onPressed: () async {
+                                  await showDialog(
+                                    context: context,
+                                    builder: (alertDialogContext) {
+                                      return AlertDialog(
+                                        title: Text('Battery Capacity'),
+                                        content: Text(
+                                            'Remaining range (kms) is indicative based on accurate reset of the in-app battery status on full charge; and consistent tracking of rides using the app. The range per remaining battery capacity is also impacted by terrain, weight, riding style and weather conditions.'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(
+                                                alertDialogContext),
+                                            child: Text('Close'),
                                           ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: Padding(
-                          padding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 80),
-                          child: FlutterFlowIconButton(
-                            borderColor: Colors.transparent,
-                            borderRadius: 1,
-                            borderWidth: 1,
-                            buttonSize: 40,
-                            icon: Icon(
-                              Icons.info_outlined,
-                              color: Color(0xFF7C868D),
-                              size: 18,
-                            ),
-                            onPressed: () async {
-                              await showDialog(
-                                context: context,
-                                builder: (alertDialogContext) {
-                                  return AlertDialog(
-                                    title: Text('Carbon Savings'),
-                                    content: Text(
-                                        'Carbon savings are indicative for equivalent ride with a petrol 2-wheeler such as Activa. This value can be affected by factors such as the riders and bike’s weight, aerodynamics, and rider behavior. This value is not fixed, and it can change depending on the way the scooter/bike is ridden and maintained.'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.pop(alertDialogContext),
-                                        child: Text('Close'),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                        ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsetsDirectional.fromSTEB(20, 1, 20, 52),
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: FlutterFlowTheme.of(context).primaryBackground,
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(20, 12, 20, 12),
-                child: Container(
-                  width: double.infinity,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        blurRadius: 4,
-                        color: Color(0x34090F13),
-                        offset: Offset(0, 2),
-                      )
-                    ],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Stack(
-                    children: [
-                      Row(
+                      child: Column(
                         mainAxisSize: MainAxisSize.max,
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(10, 0, 0, 0),
-                            child: Image.asset(
-                              'assets/images/batterynew.png',
-                              width: 100,
-                              height: 100,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(12, 8, 12, 8),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsetsDirectional.fromSTEB(
-                                          0, 0, 10, 0),
-                                      child: Text(
-                                        '$_batteryRange Kms',
-                                        style: FlutterFlowTheme.of(context)
-                                            .bodyText1
-                                            .override(
-                                              fontFamily: 'Poppins',
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                      ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Padding(
+                                padding: EdgeInsetsDirectional.fromSTEB(
+                                    0, 10, 10, 0),
+                                child: FFButtonWidget(
+                                  onPressed: () async {
+                                    await resetBatteryRange();
+                                    showToast("Battery Reset Successful");
+                                    await fetchBattery();
+                                  },
+                                  text: 'Reset Battery',
+                                  icon: Icon(
+                                    Icons.battery_charging_full,
+                                    size: 15,
+                                  ),
+                                  options: FFButtonOptions(
+                                    width: 160,
+                                    height: 40,
+                                    color: Color(0x8DEE8B60),
+                                    textStyle: FlutterFlowTheme.of(context)
+                                        .subtitle2
+                                        .override(
+                                          fontFamily: 'Poppins',
+                                          color: Color(0xFF030112),
+                                        ),
+                                    borderSide: BorderSide(
+                                      color: Colors.transparent,
+                                      width: 1,
                                     ),
-                                    Text(
-                                      'Remaining',
-                                      style: FlutterFlowTheme.of(context)
-                                          .bodyText2
-                                          .override(
-                                            fontFamily: 'Poppins',
-                                            fontWeight: FontWeight.w200,
-                                          ),
-                                    ),
-                                  ],
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                 ),
-                                Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsetsDirectional.fromSTEB(
-                                          0, 0, 10, 0),
-                                      child: Text(
-                                        '$_batteryResetTime',
-                                        style: FlutterFlowTheme.of(context)
-                                            .subtitle1
-                                            .override(
-                                              fontFamily: 'Outfit',
-                                              color: FlutterFlowTheme.of(context)
-                                                  .alternate,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.normal,
-                                            ),
-                                      ),
-                                    ),
-                                    Text(
-                                      'Last Reset',
-                                      style: FlutterFlowTheme.of(context)
-                                          .bodyText2
-                                          .override(
-                                            fontFamily: 'Poppins',
-                                            fontWeight: FontWeight.w200,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsetsDirectional.fromSTEB(
-                                          0, 0, 10, 0),
-                                      child: Text(
-                                        'Wednesday, 1st Feb',
-                                        style: FlutterFlowTheme.of(context)
-                                            .subtitle1
-                                            .override(
-                                              fontFamily: 'Outfit',
-                                              color: FlutterFlowTheme.of(context)
-                                                  .alternate,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.normal,
-                                            ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-
-                        ],
-                      ),
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: Padding(
-                          padding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 80),
-                          child: FlutterFlowIconButton(
-                            borderColor: Colors.transparent,
-                            borderRadius: 1,
-                            borderWidth: 1,
-                            buttonSize: 40,
-                            icon: Icon(
-                              Icons.info_outlined,
-                              color: Color(0xFF7C868D),
-                              size: 18,
-                            ),
-                            onPressed: () async {
-                              await showDialog(
-                                context: context,
-                                builder: (alertDialogContext) {
-                                  return AlertDialog(
-                                    title: Text('Battery Capacity'),
-                                    content: Text(
-                                        'Remaining range (kms) is indicative based on accurate reset of the in-app battery status on full charge; and consistent tracking of rides using the app. The range per remaining battery capacity is also impacted by terrain, weight, riding style and weather conditions.'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.pop(alertDialogContext),
-                                        child: Text('Close'),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(20, 1, 20, 52),
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: FlutterFlowTheme.of(context).primaryBackground,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          Padding(
-                            padding:
-                                EdgeInsetsDirectional.fromSTEB(0, 10, 10, 0),
-                            child: FFButtonWidget(
-                              onPressed: () async {
-                                await resetBatteryRange();
-                                showToast("Battery Reset Successful");
-                                await fetchBattery();
-                              },
-                              text: 'Reset Battery',
-                              icon: Icon(
-                                Icons.battery_charging_full,
-                                size: 15,
                               ),
-                              options: FFButtonOptions(
-                                width: 170,
-                                height: 40,
-                                color: Color(0x8DEE8B60),
-                                textStyle: FlutterFlowTheme.of(context)
-                                    .subtitle2
-                                    .override(
-                                      fontFamily: 'Poppins',
-                                      color: Color(0xFF030112),
+                              Padding(
+                                padding: EdgeInsetsDirectional.fromSTEB(
+                                    0, 10, 10, 0),
+                                child: FFButtonWidget(
+                                  onPressed: () async {
+                                    openScreen(
+                                        context,
+                                        RideHistory(
+                                          address:
+                                              weather?.location?.name ?? "",
+                                        ));
+                                  },
+                                  text: 'Ride History',
+                                  icon: Icon(
+                                    Icons.history,
+                                    size: 15,
+                                  ),
+                                  options: FFButtonOptions(
+                                    width: 160,
+                                    height: 40,
+                                    color: Color(0x8DEE8B60),
+                                    textStyle: FlutterFlowTheme.of(context)
+                                        .subtitle2
+                                        .override(
+                                          fontFamily: 'Poppins',
+                                          color: Color(0xFF030112),
+                                        ),
+                                    borderSide: BorderSide(
+                                      color: Colors.transparent,
+                                      width: 1,
                                     ),
-                                borderSide: BorderSide(
-                                  color: Colors.transparent,
-                                  width: 1,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                 ),
-                                borderRadius: BorderRadius.circular(8),
                               ),
-                            ),
+                            ],
                           ),
                           Padding(
                             padding:
-                                EdgeInsetsDirectional.fromSTEB(0, 10, 10, 0),
+                                EdgeInsetsDirectional.fromSTEB(0, 50, 0, 10),
                             child: FFButtonWidget(
                               onPressed: () async {
-                                openScreen(context, const RideHistory());
+                                if (weatherDialog == "") {
+                                  setState(() {
+                                    isDiaload = true;
+                                  });
+                                } else {
+                                  if (!await handleLocationPermission(
+                                      context)) {
+                                  } else {
+                                    LatLng latLng = await getLoc();
+                                    print("latlnh ${latLng}");
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              MapRoute(pos: latLng)),
+                                    ).then((value) {
+                                      if (value == 1) {
+                                        fetchBattery();
+                                        fetchRides();
+                                      }
+                                    });
+                                  }
+                                }
                               },
-                              text: 'Ride History',
+                              text: "LET'S RIDE",
                               icon: Icon(
-                                Icons.history,
+                                Icons.motorcycle_rounded,
                                 size: 15,
                               ),
                               options: FFButtonOptions(
-                                width: 170,
-                                height: 40,
-                                color: Color(0x8DEE8B60),
-                                textStyle: FlutterFlowTheme.of(context)
-                                    .subtitle2
-                                    .override(
-                                      fontFamily: 'Poppins',
-                                      color: Color(0xFF030112),
-                                    ),
+                                width: 230,
+                                height: 50,
+                                color: Color(0xFFEDED16),
+                                textStyle: FlutterFlowTheme.of(context).title1,
                                 borderSide: BorderSide(
                                   color: Colors.transparent,
                                   width: 1,
@@ -707,45 +807,110 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
                           ),
                         ],
                       ),
-                      Padding(
-                        padding: EdgeInsetsDirectional.fromSTEB(0, 60, 0, 10),
-                        child: FFButtonWidget(
-                          onPressed: () async {
-                            if (!await handleLocationPermission(context)) {
-                            } else {
-                              LatLng latLng = await getLoc();
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        MapRoute(pos: latLng)),
-                              ).then((value) => fetchBattery());
-                            }
-                          },
-                          text: 'START RIDE',
-                          icon: Icon(
-                            Icons.motorcycle_rounded,
-                            size: 15,
-                          ),
-                          options: FFButtonOptions(
-                            width: 230,
-                            height: 50,
-                            color: Color(0xFFEDED16),
-                            textStyle: FlutterFlowTheme.of(context).title1,
-                            borderSide: BorderSide(
-                              color: Colors.transparent,
-                              width: 1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            isDiaload == false
+                ? Container()
+                : Container(
+                    color: Colors.black54,
+                    height: double.infinity,
+                    width: double.infinity,
+                    child: Center(
+                        child: Card(
+                      color: Colors.transparent,
+                      elevation: 100.0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(30.0),
+                        child: Container(
+                          height: 250,
+                          decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(5.0))),
+                          child: Padding(
+                            padding: const EdgeInsets.all(20.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                Text("Permission",
+                                    style: TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.bold)),
+                                SizedBox(
+                                  height: 5,
+                                ),
+                                Text(
+                                  'Niion App collects location data to enable you to track your rides even when app is in background, which also allow you to track battery life accurately. Location data is also used to share weather information.',
+                                  style: TextStyle(fontSize: 16),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines:7,
+                                ),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 100),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      InkWell(
+                                        onTap: () {
+                                          isDiaload = false;
+                                          setState(() {});
+                                        },
+                                        child: Container(
+                                          child: Text(
+                                            "DENY",
+                                            style: TextStyle(
+                                                fontSize: 17,
+                                                fontWeight: FontWeight.w500),
+                                          ),
+                                        ),
+                                      ),
+                                      InkWell(
+                                        onTap: () async {
+                                          saveLocal(weatherDialogKEY,
+                                              "weatherDialog");
+                                          if (await handleLocationPermission(
+                                              context)) {
+                                            Position position = await Geolocator
+                                                .getCurrentPosition(
+                                                    desiredAccuracy:
+                                                        LocationAccuracy.high);
+                                            weather = await getWeather(
+                                                position.latitude,
+                                                position.longitude);
+                                            weatherDialog = await getLocal(weatherDialogKEY);
+                                            isDiaload = false;
+                                            setState(() {});
+                                          }
+                                        },
+                                        child: Container(
+                                          child: Text("ACCEPT",
+                                              style: TextStyle(
+                                                  fontSize: 17,
+                                                  fontWeight: FontWeight.w500)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              ],
                             ),
-                            borderRadius: BorderRadius.circular(8),
                           ),
                         ),
                       ),
-                    ],
+                    )),
                   ),
-                ),
-              ),
-            ],
-          ),
+          ],
         ),
       ),
     );
@@ -946,6 +1111,38 @@ class SideDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Future<bool> showExitPopup() async {
+      return await showDialog(
+            //show confirm dialogue
+            //the return value will be from "Yes" or "No" options
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text('Delete Account'),
+              content: Text('Are you sure you want to delete your account?'),
+              actions: [
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  //return false when click on "NO"
+                  child: Text('No'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    await logout();
+                    closeScreen(context);
+                    Navigator.pushReplacement(context,
+                        MaterialPageRoute(builder: (_) {
+                      return SignUp();
+                    }));
+                  },
+                  child: Text('Yes'),
+                ),
+              ],
+            ),
+          ) ??
+          false; //if showDialouge had returned null, then return false
+    }
+
     return Drawer(
         child: SingleChildScrollView(
             child: Stack(children: <Widget>[
@@ -968,26 +1165,33 @@ class SideDrawer extends StatelessWidget {
             title: const Text('Home'),
             onTap: () => {Navigator.of(context).pop()},
           ),
-          ListTile(
-            leading: const Icon(Icons.battery_charging_full,
-                color: Colors.deepPurpleAccent),
-            title: const Text('Track Your Battery'),
-            onTap: () => {Navigator.of(context).pop()},
-          ),
+          // ListTile(
+          //   leading: const Icon(Icons.battery_charging_full,
+          //       color: Colors.deepPurpleAccent),
+          //   title: const Text('Track Your Battery'),
+          //   onTap: () => {Navigator.of(context).pop()},
+          // ),
           ListTile(
             leading:
                 const Icon(Icons.drive_eta, color: Colors.deepPurpleAccent),
             title: const Text('Ride History'),
             onTap: () {
               Navigator.of(context).pop();
-              openScreen(context, const RideHistory());
+              openScreen(
+                  context,
+                  RideHistory(
+                    address: weather?.location?.name ?? "",
+                  ));
             },
           ),
           ListTile(
             leading:
                 const Icon(Icons.notifications, color: Colors.deepPurpleAccent),
             title: const Text('Notification Center'),
-            onTap: () => {Navigator.of(context).pop()},
+            onTap: () {
+              Navigator.of(context).pop();
+              openScreen(context, const NotificationList());
+            },
           ),
           ListTile(
             leading: const Icon(Icons.person, color: Colors.deepPurpleAccent),
@@ -1068,6 +1272,14 @@ class SideDrawer extends StatelessWidget {
               Navigator.of(context).pop();
               await logout();
               closeScreen(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.delete_outline,
+                color: Colors.deepPurpleAccent),
+            title: const Text('Delete Account'),
+            onTap: () async {
+              showExitPopup();
             },
           ),
         ],

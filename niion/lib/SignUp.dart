@@ -23,8 +23,8 @@ class _SignUpState extends State<SignUp> {
   void initState() {
     super.initState();
     NotificationApi.init();
-    NotificationApi.showNtfc(id:0, title: "", body: "", payload: 'n.d');
-    NotificationApi.cancelNtfc(id: 0);
+    // NotificationApi.showNtfc(id:0, title: "", body: "", payload: 'n.d');
+    // NotificationApi.cancelNtfc(id: 0);
   }
 
   @override
@@ -85,6 +85,8 @@ class _SignUpState extends State<SignUp> {
                     saveLocal(prefUserName, nameController.text.toString());
                     saveLocal(prefUserEmail, emailController.text.toString());
                     saveLocal(prefUserNumber, numberController.text.toString());
+                    saveLocal(weatherDialogKEY,
+                        "");
                     setLoggedIn(true);
                     showToast("Registration Done");
                     resetBatteryRange();

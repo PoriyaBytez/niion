@@ -7,14 +7,17 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:location/location.dart' as a;
 import 'package:niion/AlertIntface.dart';
 import 'package:niion/main.dart';
+import 'package:niion/pojo/RidePojo.dart';
 import 'package:niion/pojo/WeatherPojo.dart' as b;
 import 'package:permission_handler/permission_handler.dart';
 
 import '../Constants.dart';
 import 'NotificationApi.dart';
+import 'RidesDatabase.dart';
 
 showToast(String message) {
   Fluttertoast.cancel();
@@ -202,11 +205,14 @@ Future enableGPS() async {
 
 resetBatteryRange() async {
   await saveLocal(prefBatteryRange, batteryRange);
-  await saveLocal(prefBatteryResetTime, getDateTime(getTS()));
+  await saveLocal(prefBatteryResetDate, getDateTime(getTS()));
+  await saveLocal(prefBatteryResetTime, getTime(getTS()));
   await saveLocal(prefBatteryThresholdState, 0);
 }
 
-Future<void> consumeBattery(double km) async {
+bool isAlert = false;
+
+Future<void> consumeBattery(double km, BuildContext context) async {
   var range = await getLocal(prefBatteryRange) - km;
   if (range < 0) range = 0;
   await saveLocal(prefBatteryRange, range);
@@ -216,22 +222,71 @@ Future<void> consumeBattery(double km) async {
   if (localSlab != currentSlab) {
     await saveLocal(prefBatteryThresholdState, currentSlab);
     if (currentSlab > 0 && !(localSlab == 2 && currentSlab == 1)) {
-      showBatteryNtfc(range);
+      int a;
+      if(range <= 5.0){
+        a = 5;
+      }else {
+        a = 10;
+      }
+      showBatteryNtfc(a);
+      await RidesDatabase.instance.createNotification(NotificationPojo(
+          createdTime: getTS(),
+          message:
+              "You have less than $a km${range > 1.0 ? 's' : ''} of battery remaining. Please charge your battery."));
+      final player = AudioPlayer();
+      player.setAsset('assets/audios/Niion-alert-notification.wav');
+      player.play();
+      _showMyDialog(context, a);
     }
   }
 }
 
+Future<void> _showMyDialog(BuildContext context, var km) async {
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false, // user must tap button!
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Battery Alert'),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: <Widget>[
+              Text(
+                  'You have less than $km km${km > 1.0 ? 's' : ''} of battery remaining. Please charge your battery.'),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('OK'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
+
 void showBatteryNtfc(var range) {
+  print("fire=========================Notification");
   // String title = "Battery${(currentSlab > 1) ? " Critically" : ""} Low";
   String title = "Battery Alert";
   // String body = "${range.toStringAsFixed(2)} Km Left. Please charge now!";
-  double km = range.toStringAsFixed(2);
+  // double km = double.parse(range.toStringAsFixed(2));
+  int a;
+  if(range <= 5.0){
+    a = 5;
+  }else {
+    a = 10;
+  }
   String body =
-      "You have less than $km km${km > 1 ? 's' : ''} of battery remaining. Please charge your battery.";
+      "You have less than $a km${range > 1.0 ? 's' : ''} of battery remaining. Please charge your battery.";
   NotificationApi.showNtfc(title: title, body: body, payload: 'nik.red');
 }
 
-void showAlertIfBatteryLess() async {
+Future showAlertIfBatteryLess() async {
   var range = await getLocal(prefBatteryRange);
   if (range < batteryThreshold1) {
     showBatteryNtfc(range);
@@ -247,6 +302,10 @@ String shrinkDecimal(var s, int count) {
 }
 
 Future<String> getBatteryResetTime() async {
+  return await getLocal(prefBatteryResetDate);
+}
+
+Future<String> getBatteryTime() async {
   return await getLocal(prefBatteryResetTime);
 }
 
@@ -272,7 +331,17 @@ String getDateTime(int? localtimeEpoch) {
   // return DateFormat('dd MM, hh:mm a').format(dt);
 }
 
-String  getTimeFromSeconds(int seconds) {
+String getTime(int? localtimeEpoch) {
+  localtimeEpoch ??= getTS();
+  if (localtimeEpoch.toString().length <= 10) {
+    localtimeEpoch = localtimeEpoch * 1000;
+  }
+  var dt = DateTime.fromMillisecondsSinceEpoch((localtimeEpoch));
+  print(" Time dsad ${DateFormat('hh:mm a').format(dt)}");
+  return DateFormat('hh:mm a').format(dt);
+}
+
+String getTimeFromSeconds(int seconds) {
   return '${(Duration(seconds: seconds))}'.split('.')[0].padLeft(8, '0');
 }
 

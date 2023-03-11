@@ -7,8 +7,8 @@ const apiKeyWeather = "73079826800d40478bf191604230501";
 
 //Battery Constants
 const batteryRange = 25;
-const batteryThreshold1 = 15;
-const batteryThreshold2 = 10;
+const batteryThreshold1 = 10;
+const batteryThreshold2 = 5;
 const ischarging = true;
 const double initialLocVariation =
     1.0; //Reset polyline is diff. bet. initial marker and 2nd marker is > 1Km
@@ -47,10 +47,13 @@ const twitterPage = "https://www.twitter.com";
 
 //Prefs
 const prefBatteryRange = "batteryRange";
-const prefBatteryResetTime = "batteryResetTime";
+const prefBatteryResetDate = "batteryResetTime";
+const prefBatteryResetTime = "batteryResetTimeDate";
 const prefBatteryThresholdState = "batteryThresholdState";
 const prefIsLoggedIn = "isLoggedIn";
 const prefUserName = "userName";
+const weatherDialogKEY = "weatherDialog";
+const locationDialogKEY = "locationDialog";
 const prefUserEmail = "userEmail";
 const prefUserNumber = "userNumber";
 

@@ -10,12 +10,15 @@ import 'package:location/location.dart';
 import 'package:flutter/services.dart';
 
 class RideHistory extends StatefulWidget {
-  const RideHistory({Key? key}) : super(key: key);
 
+  String address;
+  RideHistory({required this.address});
   @override
   State<StatefulWidget> createState() {
     return _RideHistoryState();
   }
+
+
 }
 
 class _RideHistoryState extends State<RideHistory> {
@@ -26,6 +29,7 @@ class _RideHistoryState extends State<RideHistory> {
   void initState() {
     fetchRides();
     super.initState();
+    // get();
   }
 
   Future fetchRides() async {
@@ -48,12 +52,51 @@ class _RideHistoryState extends State<RideHistory> {
     );
   }
 
-  getTime(int inputSeconds) {
-    int hours = inputSeconds ~/ 3600;
-    int minutes = (inputSeconds % 3600) ~/ 60;
-    return "h $hours m $minutes";
+  getTime(int start,int end) {
+
+    DateTime dateTimeStart = DateTime.fromMillisecondsSinceEpoch(start);
+    DateTime dateTimEnd = DateTime.fromMillisecondsSinceEpoch(end);
+    Duration difference = dateTimEnd.difference(dateTimeStart);
+    int hours = difference.inHours;
+    int minutes = difference.inMinutes.remainder(60);
+    // int hours = inputSeconds ~/ 3600;
+    // int minutes = (inputSeconds % 3600) ~/ 60;
+    return "$hours h $minutes m";
   }
 
+//   List<DateTime> dates = [
+//     DateTime.now(),
+//     DateTime.now().subtract(Duration(days: 1)),
+//     DateTime.now().subtract(Duration(days: 2)),
+//     DateTime.now().subtract(Duration(days: 3)),
+//     DateTime.now().subtract(Duration(days: 4)),
+//     DateTime.now().subtract(Duration(days: 5)),
+//     DateTime.now().subtract(Duration(days: 6)),
+//     DateTime.now().subtract(Duration(days: 7)),
+//     DateTime.now().subtract(Duration(days: 8)),
+//     DateTime.now().subtract(Duration(days: 9)),
+//     DateTime.now().subtract(Duration(days: 10)),
+//   ];
+//
+//
+//   get(){
+//     // Get dates for this week and last week
+//     DateTime now = DateTime.now();
+//     DateTime thisWeekStart =  now.subtract(Duration(days: now.weekday - 1));
+//     DateTime lastWeekStart = thisWeekStart.subtract(Duration(days: 7));
+//     List<DateTime> thisWeekDates = dates.where((date) => date.isAfter(thisWeekStart.subtract(Duration(days: 1)))).toList();
+//     List<DateTime> lastWeekDates = dates.where((date) => date.isAfter(lastWeekStart.subtract(Duration(days: 1))) && date.isBefore(thisWeekStart.subtract(Duration(days: 1)))).toList();
+//
+// // Sort dates in ascending order
+//     thisWeekDates.sort((a, b) => a.compareTo(b));
+//     lastWeekDates.sort((a, b) => a.compareTo(b));
+//
+//     print("This week dates: ${thisWeekDates.length}");
+//     print("Last week dates: ${lastWeekDates.length}");
+//   }
+
+
+  List<DateTime> dates = [];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -93,18 +136,6 @@ class _RideHistoryState extends State<RideHistory> {
         child: Column(
           mainAxisSize: MainAxisSize.max,
           children: [
-            Row(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(16, 12, 0, 12),
-                  child: Text(
-                    'This Week',
-                    style: FlutterFlowTheme.of(context).bodyText2,
-                  ),
-                ),
-              ],
-            ),
             // Padding(
             //   padding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 12),
             //   child: ListView(
@@ -283,177 +314,235 @@ class _RideHistoryState extends State<RideHistory> {
                   itemBuilder: (context, int index) {
                     DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(
                         rides[index].createdTime!);
-                    return Padding(
-                      padding: EdgeInsetsDirectional.fromSTEB(16, 0, 16, 8),
-                      child: Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color:
-                              FlutterFlowTheme.of(context).secondaryBackground,
-                          boxShadow: [
-                            BoxShadow(
-                              blurRadius: 3,
-                              color: Color(0x430F1113),
-                              offset: Offset(0, 1),
-                            )
-                          ],
-                          borderRadius: BorderRadius.circular(8),
+
+                    // dates.add(dateTime);
+                    // DateTime now = DateTime.now();
+                    // DateTime thisWeekStart = now.subtract(Duration(days: now.weekday - 1));
+                    // DateTime lastWeekStart = thisWeekStart.subtract(Duration(days: 7));
+                    // List<DateTime> thisWeekDates = dates.where((date) => date.isAfter(thisWeekStart.subtract(Duration(days: 1)))).toList();
+                    // List<DateTime> lastWeekDates = dates.where((date) => date.isAfter(lastWeekStart.subtract(Duration(days: 1))) && date.isBefore(thisWeekStart.subtract(Duration(days: 1)))).toList();
+                    //
+                    // thisWeekDates.sort((a, b) => a.compareTo(b));
+                    // lastWeekDates.sort((a, b) => a.compareTo(b));
+                    //
+                    // print("This week dates: ${thisWeekDates.length}");
+                    // print("Last week dates: ${lastWeekDates.length}");
+
+
+                    bool thisWeek = false;
+                    DateTime dt = DateTime.fromMillisecondsSinceEpoch(
+                        rides[index].createdTime!);
+                    String formattedDate = DateFormat.yMMMd().format(dt);
+                    String formattedDate2 = "";
+                    if (index > 0) {
+                      String? date2 = index > 0
+                          ? DateTime.fromMillisecondsSinceEpoch(
+                          rides[index - 1].createdTime! ).toString()
+                          : "";
+                      DateTime dt2 = DateTime.parse(date2);
+                      formattedDate2 = DateFormat.yMMMd().format(dt2);
+                    }
+                    if (index == 0) {
+                      thisWeek = true;
+                      formattedDate = "Today";
+                    } else {
+                      if (formattedDate == formattedDate2) {
+                        thisWeek = false;
+                      } else {
+                        thisWeek = true;
+                      }
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        thisWeek
+                            ? Padding(
+                                padding: EdgeInsetsDirectional.fromSTEB(
+                                    16, 12, 0, 12),
+                                child: Text(
+                                  formattedDate,
+                                  style: FlutterFlowTheme.of(context).bodyText2,
+                                ),
+                              )
+                            : Container(),
+                        Padding(
+                          padding: EdgeInsetsDirectional.fromSTEB(16, 0, 16, 8),
+                          child: Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: FlutterFlowTheme.of(context)
+                                  .secondaryBackground,
+                              boxShadow: [
+                                BoxShadow(
+                                  blurRadius: 3,
+                                  color: Color(0x430F1113),
+                                  offset: Offset(0, 1),
+                                )
+                              ],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.max,
+                              children: [
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(
+                                      12, 4, 12, 4),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.max,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.date_range,
+                                        color: Colors.black,
+                                        size: 20,
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsetsDirectional.fromSTEB(
+                                            5, 4, 0, 0),
+                                        child: Text(
+                                          DateFormat('dd MMM,yyyy')
+                                              .format(dateTime),
+                                          style: FlutterFlowTheme.of(context)
+                                              .subtitle2
+                                              .override(
+                                                fontFamily: 'Poppins',
+                                                color: Color(0xFF030112),
+                                              ),
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsetsDirectional.fromSTEB(
+                                            24, 0, 0, 0),
+                                        child: Icon(
+                                          Icons.location_on_sharp,
+                                          color: Color(0xFF030112),
+                                          size: 20,
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsetsDirectional.fromSTEB(
+                                            4, 0, 0, 0),
+                                        child: Text(
+                                          rides[index].address == "" ? widget.address : rides[index].address,
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
+                                          style: FlutterFlowTheme.of(context)
+                                              .subtitle2
+                                              .override(
+                                                fontFamily: 'Poppins',
+                                                color: Color(0xFF030112),
+                                              ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(
+                                      12, 4, 12, 8),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.max,
+                                    children: [
+                                      Padding(
+                                        padding: EdgeInsetsDirectional.fromSTEB(
+                                            0, 0, 0, 4),
+                                        child: Icon(
+                                          Icons.schedule,
+                                          color: FlutterFlowTheme.of(context)
+                                              .alternate,
+                                          size: 20,
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsetsDirectional.fromSTEB(
+                                            4, 0, 0, 0),
+                                        child: Text(
+                                          '${DateFormat('hh:mm a').format(dateTime)} - ${getTime(rides[index].createdTime!,rides[index].duration!)}',
+                                          style: FlutterFlowTheme.of(context)
+                                              .bodyText1
+                                              .override(
+                                                fontFamily: 'Poppins',
+                                                color:
+                                                    FlutterFlowTheme.of(context)
+                                                        .alternate,
+                                                fontSize: 16,
+                                              ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(
+                                      12, 4, 12, 8),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.max,
+                                    children: [
+                                      Padding(
+                                        padding: EdgeInsetsDirectional.fromSTEB(
+                                            0, 0, 0, 4),
+                                        child: Icon(
+                                          Icons.directions_bike_outlined,
+                                          color: FlutterFlowTheme.of(context)
+                                              .secondaryText,
+                                          size: 20,
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsetsDirectional.fromSTEB(
+                                            4, 0, 0, 0),
+                                        child: Text(
+                                          '${rides[index].distance.toStringAsFixed(2)} km',
+                                          style: FlutterFlowTheme.of(context)
+                                              .bodyText1
+                                              .override(
+                                                fontFamily: 'Poppins',
+                                                color:
+                                                    FlutterFlowTheme.of(context)
+                                                        .secondaryText,
+                                                fontSize: 16,
+                                              ),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 15,
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsetsDirectional.fromSTEB(
+                                            0, 0, 0, 4),
+                                        child: Icon(
+                                          Icons.shutter_speed,
+                                          color: FlutterFlowTheme.of(context)
+                                              .secondaryText,
+                                          size: 20,
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsetsDirectional.fromSTEB(
+                                            4, 0, 0, 0),
+                                        child: Text(
+                                          '${rides[index].avgSpeed.toStringAsFixed(2)} km/h',
+                                          style: FlutterFlowTheme.of(context)
+                                              .bodyText1
+                                              .override(
+                                                fontFamily: 'Poppins',
+                                                color:
+                                                    FlutterFlowTheme.of(context)
+                                                        .secondaryText,
+                                                fontSize: 16,
+                                              ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.max,
-                          children: [
-                            Padding(
-                              padding:
-                                  EdgeInsetsDirectional.fromSTEB(12, 4, 12, 4),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.max,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.date_range,
-                                    color: Colors.black,
-                                    size: 20,
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        5, 4, 0, 0),
-                                    child: Text(
-                                      DateFormat('dd MMM,yyyy')
-                                          .format(dateTime),
-                                      style: FlutterFlowTheme.of(context)
-                                          .subtitle2
-                                          .override(
-                                            fontFamily: 'Poppins',
-                                            color: Color(0xFF030112),
-                                          ),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        24, 0, 0, 0),
-                                    child: Icon(
-                                      Icons.location_on_sharp,
-                                      color: Color(0xFF030112),
-                                      size: 20,
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        4, 0, 0, 0),
-                                    child: Text(
-                                      rides[index].address,
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                      style: FlutterFlowTheme.of(context)
-                                          .subtitle2
-                                          .override(
-                                            fontFamily: 'Poppins',
-                                            color: Color(0xFF030112),
-                                          ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding:
-                                  EdgeInsetsDirectional.fromSTEB(12, 4, 12, 8),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.max,
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        0, 0, 0, 4),
-                                    child: Icon(
-                                      Icons.schedule,
-                                      color: FlutterFlowTheme.of(context)
-                                          .alternate,
-                                      size: 20,
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        4, 0, 0, 0),
-                                    child: Text(
-                                      '${DateFormat('hh:mm a').format(dateTime)} - ${getTime(rides[index].duration!)}',
-                                      style: FlutterFlowTheme.of(context)
-                                          .bodyText1
-                                          .override(
-                                            fontFamily: 'Poppins',
-                                            color: FlutterFlowTheme.of(context)
-                                                .alternate,
-                                            fontSize: 16,
-                                          ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding:
-                                  EdgeInsetsDirectional.fromSTEB(12, 4, 12, 8),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.max,
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        0, 0, 0, 4),
-                                    child: Icon(
-                                      Icons.speed,
-                                      color: FlutterFlowTheme.of(context)
-                                          .secondaryText,
-                                      size: 20,
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        4, 0, 0, 0),
-                                    child: Text(
-                                      '${rides[index].distance.toStringAsFixed(2)} km/h',
-                                      style: FlutterFlowTheme.of(context)
-                                          .bodyText1
-                                          .override(
-                                            fontFamily: 'Poppins',
-                                            color: FlutterFlowTheme.of(context)
-                                                .secondaryText,
-                                            fontSize: 16,
-                                          ),
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: 15,
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        0, 0, 0, 4),
-                                    child: Icon(
-                                      Icons.shutter_speed,
-                                      color: FlutterFlowTheme.of(context)
-                                          .secondaryText,
-                                      size: 20,
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        4, 0, 0, 0),
-                                    child: Text(
-                                      '${rides[index].avgSpeed.toStringAsFixed(2)} km/h',
-                                      style: FlutterFlowTheme.of(context)
-                                          .bodyText1
-                                          .override(
-                                            fontFamily: 'Poppins',
-                                            color: FlutterFlowTheme.of(context)
-                                                .secondaryText,
-                                            fontSize: 16,
-                                          ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      ],
                     );
                   },
                 ),

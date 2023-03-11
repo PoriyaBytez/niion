@@ -8,6 +8,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:niion/AlertIntface.dart';
 import 'package:niion/Constants.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'Globals.dart';
 import 'NotificationApi.dart';
@@ -29,20 +30,19 @@ class MapRouteState extends State<MapRoute> {
   final Completer<GoogleMapController> _controller = Completer();
   List<LatLng> polylineCoordinates = [];
   List<double> currentSpeeds = [];
-  double currentSpeed = 0.0,
-      avgSpeed = 0.0,
-      totalDistance = 0;
-   late LatLng currentLocation , sourceLocation;
+  double currentSpeed = 0.0, avgSpeed = 0.0, totalDistance = 0;
+  late LatLng currentLocation = widget.pos, sourceLocation = widget.pos;
   int duration = 0;
   bool isStarted = false;
   StreamSubscription<LocationData>? locationSubscription;
 
   @override
   void initState() {
-    super.initState();
     getCurrentLocation();
     NotificationApi.init();
     showAlertIfBatteryLess();
+
+    super.initState();
   }
 
   @override
@@ -94,14 +94,14 @@ class MapRouteState extends State<MapRoute> {
 
   String street = "";
 
+  // Chintan
   Future<void> GetAddressFromLatLong(geo.Position position) async {
     List<geocoding.Placemark> placemarks = await geocoding
         .placemarkFromCoordinates(position.latitude, position.longitude);
     // print(placemarks);
     geocoding.Placemark place = placemarks[0];
     print(
-        "adress '${place.street}, ${place.subLocality}, ${place
-            .locality}, ${place.postalCode}, ${place.country}'");
+        "adress '${place.street}, ${place.subLocality}, ${place.locality}, ${place.postalCode}, ${place.country}'");
     street = place.subLocality!;
     setState(() {});
   }
@@ -112,7 +112,7 @@ class MapRouteState extends State<MapRoute> {
     const oneSec = Duration(seconds: 1);
     _timer = Timer.periodic(
       oneSec,
-          (Timer timer) {
+      (Timer timer) {
         setState(() {
           duration++;
         });
@@ -120,12 +120,47 @@ class MapRouteState extends State<MapRoute> {
     );
   }
 
+  // Future<bool> enableBackgroundMode() async {
+  //   // await Permission.locationAlways.request();
+  //   // if (  await Permission.locationAlways.isGranted ) {
+  //   //   // Either the permission was already granted before or the user just granted it.
+  //   // }
+  //
+  //   Location location = Location();
+  //   location.enableBackgroundMode(enable: true);
+  //   // bool _bgModeEnabled = await location.isBackgroundModeEnabled();
+  //   // if (_bgModeEnabled) {
+  //   //   return true;
+  //   // } else {
+  //   //   try {
+  //   //     await location.enableBackgroundMode();
+  //   //   } catch (e) {
+  //   //     debugPrint(e.toString());
+  //   //   }
+  //   //   try {
+  //   //     _bgModeEnabled = await location.enableBackgroundMode();
+  //   //   } catch (e) {
+  //   //     debugPrint(e.toString());
+  //   //   }
+  //   //   print(" bbbbbb ${_bgModeEnabled}"); //True!
+  //   //   return _bgModeEnabled;
+  //   // }
+  // }
+
   void getCurrentLocation() async {
+    weatherDialog = await getLocal(weatherDialogKEY);
+    var status = await Permission.locationAlways.request();
+    if (status.isGranted) {
+      // You can access the user's location in the background now
+    }
     Location location = Location();
+    location.enableBackgroundMode(enable: true);
     location.getLocation().then(
-          (location) {
+      (location) {
         currentLocation = LatLng(location.latitude!, location.longitude!);
-        addPolyPoints(currentLocation);
+        if(isStarted){
+          addPolyPoints(currentLocation);
+        }
       },
     );
     GoogleMapController googleMapController = await _controller.future;
@@ -139,13 +174,15 @@ class MapRouteState extends State<MapRoute> {
           tempSpeed += element;
         }
         avgSpeed = tempSpeed / currentSpeeds.length;
-        print("sdfcdsfvdgv $avgSpeed");
       }
-      addPolyPoints(currentLocation);
+
+      if(isStarted){
+        addPolyPoints(currentLocation);
+      }
       googleMapController.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(
-            zoom: 21,
+            zoom: 20,
             target: LatLng(
               newLoc.latitude!,
               newLoc.longitude!,
@@ -164,7 +201,7 @@ class MapRouteState extends State<MapRoute> {
     } else {
       // Polyline has 1 or more elements
       double currentDistance =
-      calculateDistance(getLastPolyLine(polylineCoordinates), latlon2);
+          calculateDistance(getLastPolyLine(polylineCoordinates), latlon2);
       if (currentDistance > initialLocVariation &&
           polylineCoordinates.length == 1) {
         print("Distz = ifcond $currentDistance");
@@ -176,7 +213,8 @@ class MapRouteState extends State<MapRoute> {
       print("Distz = else cond $currentDistance");
       if (isStarted) {
         totalDistance += currentDistance;
-        consumeBattery(currentDistance);
+        consumeBattery(currentDistance, context);
+
       }
       print("Distz = ${totalDistance.toStringAsFixed(2)}");
     }
@@ -203,21 +241,30 @@ class MapRouteState extends State<MapRoute> {
         cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
     return 12742 * asin(sqrt(a));
   }
-
+  int startDateTime = 0;
+  bool isDiaload = false;
+  String weatherDialog = "";
   @override
   Widget build(BuildContext context) {
+    print("----============build================");
     // currentLocation = widget.pos;
-    // addPolyPoints(currentLocation!);
+    // addPolyPoints(currentLocation);
     var map = GoogleMap(
+      buildingsEnabled: false,
       initialCameraPosition: CameraPosition(
         target: currentLocation,
-        zoom: 21,
+        zoom: 20,
       ),
       markers: {
-        Marker(
-          markerId: const MarkerId("sourceLocation"),
-          position: sourceLocation,
-        ),
+        (isStarted)
+            ? Marker(
+                markerId: const MarkerId("sourceLocation"),
+                position: sourceLocation,
+              )
+            : Marker(
+                markerId: const MarkerId("sourceLocation"),
+                position: currentLocation,
+              ),
         Marker(
             markerId: const MarkerId("currentLocation"),
             position: currentLocation),
@@ -234,7 +281,6 @@ class MapRouteState extends State<MapRoute> {
         ),
       },
     );
-
     var a1 = AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
       title: const Text('Are you sure you want to end your ride?'),
@@ -242,16 +288,17 @@ class MapRouteState extends State<MapRoute> {
         TextButton(
             onPressed: () async {
               await RidesDatabase.instance.createRide(RidePojo(
-                  duration: duration,
+                  // duration: duration,
+                  duration: getTS(),
                   distance: totalDistance,
                   avgSpeed: avgSpeed,
                   carbonSavings: carbonSavings(totalDistance),
                   polylines: polylineCoordinates,
                   address: street,
-                  createdTime: getTS()));
+                  createdTime: startDateTime));
               setState(() {
                 Navigator.pop(context);
-                closeScreen(context);
+                Navigator.pop(context, 1);
               });
             },
             child: const Text("Yes")),
@@ -268,7 +315,7 @@ class MapRouteState extends State<MapRoute> {
             child: map,
           ),
           Expanded(
-              flex: 4,
+              flex: 5,
               child: Container(
                 color: Colors.white,
                 child: Column(
@@ -283,10 +330,15 @@ class MapRouteState extends State<MapRoute> {
                               children: [
                                 Text(
                                   '${getTimeFromSeconds(duration)}',
-                                  style: const TextStyle(
-                                      color: Colors.red,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500),
+                                  style: FlutterFlowTheme.of(context)
+                                      .title1
+                                      .override(
+                                        fontFamily: 'Lexend Deca',
+                                        color: FlutterFlowTheme.of(context)
+                                            .alternate,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                 ),
                                 Icon(
                                   Icons.watch_later_outlined,
@@ -298,11 +350,16 @@ class MapRouteState extends State<MapRoute> {
                             Column(
                               children: [
                                 Text(
-                                  '${shrinkDecimal(currentSpeed, 2)} km',
-                                  style: const TextStyle(
-                                      color: Colors.black54,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500),
+                                  '${shrinkDecimal(totalDistance, 2)} km',
+                                  style: FlutterFlowTheme.of(context)
+                                      .title1
+                                      .override(
+                                        fontFamily: 'Lexend Deca',
+                                        color: FlutterFlowTheme.of(context)
+                                            .secondaryText,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                 ),
                                 Icon(
                                   Icons.directions_bike_rounded,
@@ -313,18 +370,22 @@ class MapRouteState extends State<MapRoute> {
                             ),
                           ],
                         ),
-                        SizedBox(height: 20),
+                        SizedBox(height: 10),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
                             Column(
                               children: [
                                 Text(
-                                  '${shrinkDecimal(totalDistance, 2)} km/h',
-                                  style: TextStyle(
-                                      color: Color(0x8DEE8B60),
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500),
+                                  '${double.parse(shrinkDecimal(currentSpeed, 2)) < 0.0 ? 0.00 : shrinkDecimal(currentSpeed, 2)} km/h',
+                                  style: FlutterFlowTheme.of(context)
+                                      .title1
+                                      .override(
+                                        fontFamily: 'Lexend Deca',
+                                        color: Color(0x8D622206),
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                 ),
                                 Icon(
                                   Icons.speed,
@@ -336,11 +397,16 @@ class MapRouteState extends State<MapRoute> {
                             Column(
                               children: [
                                 Text(
-                                  '${shrinkDecimal(avgSpeed, 2)} km/h',
-                                  style: TextStyle(
-                                      color: Colors.red.shade200,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500),
+                                  '${double.parse(shrinkDecimal(avgSpeed, 2)) < 0.0 ? 0.00 : shrinkDecimal(avgSpeed, 2)} km/h',
+                                  // '${shrinkDecimal(avgSpeed, 2)} km/h',
+                                  style: FlutterFlowTheme.of(context)
+                                      .title1
+                                      .override(
+                                        fontFamily: 'Lexend Deca',
+                                        color: Color(0x8DEE8B60),
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                 ),
                                 Icon(
                                   Icons.shutter_speed,
@@ -354,17 +420,27 @@ class MapRouteState extends State<MapRoute> {
                         if (!isStarted)
                           Padding(
                             padding:
-                            EdgeInsetsDirectional.fromSTEB(0, 30, 0, 10),
+                                EdgeInsetsDirectional.fromSTEB(0, 20, 0, 10),
                             child: FFButtonWidget(
                               onPressed: () {
                                 setState(() {
-                                  isStarted = true;
-                                  startTimer();
-                                  LatLng latLng =
-                                  getLastPolyLine(polylineCoordinates);
-                                  polylineCoordinates.clear();
-                                  polylineCoordinates.add(latLng);
-                                  getAddress();
+                                  if(weatherDialog == ""){
+                                    setState(() {
+                                      isDiaload = true;
+                                    });
+                                  }else{
+                                    setState(() {
+                                      isStarted = true;
+                                      startTimer();
+                                      // LatLng latLng =
+                                      //     getLastPolyLine(polylineCoordinates);
+                                      // polylineCoordinates.clear();
+                                      // polylineCoordinates.add(latLng);
+                                      startDateTime = getTS();
+                                      getAddress();
+                                    });
+                                  }
+
                                 });
                               },
                               text: 'START RIDE',
@@ -376,9 +452,7 @@ class MapRouteState extends State<MapRoute> {
                                 width: 230,
                                 height: 50,
                                 color: Color(0xFFEDED16),
-                                textStyle: FlutterFlowTheme
-                                    .of(context)
-                                    .title1,
+                                textStyle: FlutterFlowTheme.of(context).title1,
                                 borderSide: BorderSide(
                                   color: Colors.transparent,
                                   width: 1,
@@ -390,7 +464,7 @@ class MapRouteState extends State<MapRoute> {
                         if (isStarted)
                           Padding(
                             padding:
-                            EdgeInsetsDirectional.fromSTEB(0, 30, 0, 10),
+                                EdgeInsetsDirectional.fromSTEB(0, 20, 0, 10),
                             child: FFButtonWidget(
                               onPressed: () {
                                 setState(() {
@@ -410,9 +484,7 @@ class MapRouteState extends State<MapRoute> {
                                 width: 230,
                                 height: 50,
                                 color: Color(0xFFEDED16),
-                                textStyle: FlutterFlowTheme
-                                    .of(context)
-                                    .title1,
+                                textStyle: FlutterFlowTheme.of(context).title1,
                                 borderSide: BorderSide(
                                   color: Colors.transparent,
                                   width: 1,
@@ -519,7 +591,7 @@ class MapRouteState extends State<MapRoute> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: Color(0xFF030112),
           elevation: 0.0,
           leading: InkWell(
               onTap: () {
@@ -529,11 +601,15 @@ class MapRouteState extends State<MapRoute> {
                       builder: (_) {
                         return a1;
                       });
-                }else {
+                } else {
                   Navigator.pop(context);
                 }
               },
-              child: Icon(Icons.arrow_back, color: Colors.black, size: 35,)),
+              child: Icon(
+                Icons.arrow_back,
+                color: Color(0xFFEDED16),
+                size: 35,
+              )),
         ),
         body: WillPopScope(
             onWillPop: () async {
@@ -543,7 +619,7 @@ class MapRouteState extends State<MapRoute> {
                     builder: (_) {
                       return a1;
                     });
-              }else {
+              } else {
                 Navigator.pop(context);
               }
               // var n1 = AlertIntface();
@@ -552,7 +628,91 @@ class MapRouteState extends State<MapRoute> {
               // });
               return false;
             },
-            child: b1),
+            child: Stack(
+              children: [
+                b1,
+                isDiaload == false ? Container(): Container(
+                  color: Colors.black54,
+                  height: double.infinity,
+                  width: double.infinity,
+                  child: Center(
+                      child: Card(
+                        color: Colors.transparent,
+                        elevation: 100.0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15.0),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(30.0),
+                          child: Container(
+                            height: 200,
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius:
+                                BorderRadius.all(Radius.circular(5.0))),
+                            child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                children: [
+                                  Text("Permission",
+                                      style: TextStyle(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.bold)),
+                                  SizedBox(
+                                    height: 5,
+                                  ),
+                                  Text(
+                                    'This app collects location data to enable weather info. smooth ebike ride experience even when the app is closed or not in use.',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                  SizedBox(
+                                    height: 10,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 100),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        InkWell(
+                                          onTap: () {
+                                            Navigator.pop(context);
+                                          },
+                                          child: Container(
+                                            child: Text(
+                                              "DENY",
+                                              style: TextStyle(
+                                                  fontSize: 17,
+                                                  fontWeight: FontWeight.w500),
+                                            ),
+                                          ),
+                                        ),
+                                        InkWell(
+                                          onTap: () async {
+                                              isDiaload = false;
+                                              setState(() {});
+                                            },
+                                          child: Container(
+                                            child: Text("ACCEPT",
+                                                style: TextStyle(
+                                                    fontSize: 17,
+                                                    fontWeight: FontWeight.w500)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      )),
+                ),
+              ],
+            )),
       ),
     );
   }

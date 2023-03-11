@@ -14,7 +14,7 @@ class NotificationApi {
   }
 
   static Future init({bool initScheduled = false}) async {
-    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const android = AndroidInitializationSettings('@mipmap/launcher_icon');
     const iOS = DarwinInitializationSettings();
     const settings = InitializationSettings(android: android, iOS: iOS);
 
