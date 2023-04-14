@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:niion/Constants.dart';
 
 import 'Dashboard.dart';
@@ -25,6 +26,12 @@ class _SignUpState extends State<SignUp> {
     NotificationApi.init();
     // NotificationApi.showNtfc(id:0, title: "", body: "", payload: 'n.d');
     // NotificationApi.cancelNtfc(id: 0);
+    FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+        FlutterLocalNotificationsPlugin();
+    flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestPermission();
   }
 
   @override
@@ -85,8 +92,7 @@ class _SignUpState extends State<SignUp> {
                     saveLocal(prefUserName, nameController.text.toString());
                     saveLocal(prefUserEmail, emailController.text.toString());
                     saveLocal(prefUserNumber, numberController.text.toString());
-                    saveLocal(weatherDialogKEY,
-                        "");
+                    saveLocal(weatherDialogKEY, "");
                     setLoggedIn(true);
                     showToast("Registration Done");
                     resetBatteryRange();

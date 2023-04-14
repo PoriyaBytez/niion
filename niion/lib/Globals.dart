@@ -211,7 +211,7 @@ resetBatteryRange() async {
 }
 
 bool isAlert = false;
-
+final player = AudioPlayer();
 Future<void> consumeBattery(double km, BuildContext context) async {
   var range = await getLocal(prefBatteryRange) - km;
   if (range < 0) range = 0;
@@ -223,9 +223,9 @@ Future<void> consumeBattery(double km, BuildContext context) async {
     await saveLocal(prefBatteryThresholdState, currentSlab);
     if (currentSlab > 0 && !(localSlab == 2 && currentSlab == 1)) {
       int a;
-      if(range <= 5.0){
+      if (range <= 5.0) {
         a = 5;
-      }else {
+      } else {
         a = 10;
       }
       showBatteryNtfc(a);
@@ -233,7 +233,6 @@ Future<void> consumeBattery(double km, BuildContext context) async {
           createdTime: getTS(),
           message:
               "You have less than $a km${range > 1.0 ? 's' : ''} of battery remaining. Please charge your battery."));
-      final player = AudioPlayer();
       player.setAsset('assets/audios/Niion-alert-notification.wav');
       player.play();
       _showMyDialog(context, a);
@@ -261,6 +260,7 @@ Future<void> _showMyDialog(BuildContext context, var km) async {
             child: const Text('OK'),
             onPressed: () {
               Navigator.of(context).pop();
+              player.stop();
             },
           ),
         ],
@@ -276,9 +276,9 @@ void showBatteryNtfc(var range) {
   // String body = "${range.toStringAsFixed(2)} Km Left. Please charge now!";
   // double km = double.parse(range.toStringAsFixed(2));
   int a;
-  if(range <= 5.0){
+  if (range <= 5.0) {
     a = 5;
-  }else {
+  } else {
     a = 10;
   }
   String body =

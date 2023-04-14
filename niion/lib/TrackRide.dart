@@ -158,7 +158,7 @@ class MapRouteState extends State<MapRoute> {
     location.getLocation().then(
       (location) {
         currentLocation = LatLng(location.latitude!, location.longitude!);
-        if(isStarted){
+        if (isStarted) {
           addPolyPoints(currentLocation);
         }
       },
@@ -176,7 +176,7 @@ class MapRouteState extends State<MapRoute> {
         avgSpeed = tempSpeed / currentSpeeds.length;
       }
 
-      if(isStarted){
+      if (isStarted) {
         addPolyPoints(currentLocation);
       }
       googleMapController.animateCamera(
@@ -214,7 +214,6 @@ class MapRouteState extends State<MapRoute> {
       if (isStarted) {
         totalDistance += currentDistance;
         consumeBattery(currentDistance, context);
-
       }
       print("Distz = ${totalDistance.toStringAsFixed(2)}");
     }
@@ -241,6 +240,7 @@ class MapRouteState extends State<MapRoute> {
         cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
     return 12742 * asin(sqrt(a));
   }
+
   int startDateTime = 0;
   bool isDiaload = false;
   String weatherDialog = "";
@@ -424,11 +424,11 @@ class MapRouteState extends State<MapRoute> {
                             child: FFButtonWidget(
                               onPressed: () {
                                 setState(() {
-                                  if(weatherDialog == ""){
+                                  if (weatherDialog == "") {
                                     setState(() {
                                       isDiaload = true;
                                     });
-                                  }else{
+                                  } else {
                                     setState(() {
                                       isStarted = true;
                                       startTimer();
@@ -440,7 +440,6 @@ class MapRouteState extends State<MapRoute> {
                                       getAddress();
                                     });
                                   }
-
                                 });
                               },
                               text: 'START RIDE',
@@ -631,86 +630,91 @@ class MapRouteState extends State<MapRoute> {
             child: Stack(
               children: [
                 b1,
-                isDiaload == false ? Container(): Container(
-                  color: Colors.black54,
-                  height: double.infinity,
-                  width: double.infinity,
-                  child: Center(
-                      child: Card(
-                        color: Colors.transparent,
-                        elevation: 100.0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15.0),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(30.0),
-                          child: Container(
-                            height: 200,
-                            decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius:
-                                BorderRadius.all(Radius.circular(5.0))),
-                            child: Padding(
-                              padding: const EdgeInsets.all(20.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                children: [
-                                  Text("Permission",
-                                      style: TextStyle(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.bold)),
-                                  SizedBox(
-                                    height: 5,
-                                  ),
-                                  Text(
-                                    'This app collects location data to enable weather info. smooth ebike ride experience even when the app is closed or not in use.',
-                                    style: TextStyle(fontSize: 16),
-                                  ),
-                                  SizedBox(
-                                    height: 10,
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 100),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                      children: [
-                                        InkWell(
-                                          onTap: () {
-                                            Navigator.pop(context);
-                                          },
-                                          child: Container(
-                                            child: Text(
-                                              "DENY",
-                                              style: TextStyle(
-                                                  fontSize: 17,
-                                                  fontWeight: FontWeight.w500),
+                isDiaload == false
+                    ? Container()
+                    : Container(
+                        color: Colors.black54,
+                        height: double.infinity,
+                        width: double.infinity,
+                        child: Center(
+                            child: Card(
+                          color: Colors.transparent,
+                          elevation: 100.0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15.0),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(30.0),
+                            child: Container(
+                              height: 200,
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(5.0))),
+                              child: Padding(
+                                padding: const EdgeInsets.all(20.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  children: [
+                                    Text("Permission",
+                                        style: TextStyle(
+                                            fontSize: 17,
+                                            fontWeight: FontWeight.bold)),
+                                    SizedBox(
+                                      height: 5,
+                                    ),
+                                    Text(
+                                      'This app collects location data to enable weather info. smooth ebike ride experience even when the app is closed or not in use.',
+                                      style: TextStyle(fontSize: 16),
+                                    ),
+                                    SizedBox(
+                                      height: 10,
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 100),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          InkWell(
+                                            onTap: () {
+                                              Navigator.pop(context);
+                                            },
+                                            child: Container(
+                                              child: Text(
+                                                "DENY",
+                                                style: TextStyle(
+                                                    fontSize: 17,
+                                                    fontWeight:
+                                                        FontWeight.w500),
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                        InkWell(
-                                          onTap: () async {
+                                          InkWell(
+                                            onTap: () async {
                                               isDiaload = false;
                                               setState(() {});
                                             },
-                                          child: Container(
-                                            child: Text("ACCEPT",
-                                                style: TextStyle(
-                                                    fontSize: 17,
-                                                    fontWeight: FontWeight.w500)),
+                                            child: Container(
+                                              child: Text("ACCEPT",
+                                                  style: TextStyle(
+                                                      fontSize: 17,
+                                                      fontWeight:
+                                                          FontWeight.w500)),
+                                            ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                ],
+                                        ],
+                                      ),
+                                    )
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      )),
-                ),
+                        )),
+                      ),
               ],
             )),
       ),

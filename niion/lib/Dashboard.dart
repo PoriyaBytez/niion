@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:go_router/go_router.dart';
+// import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:gradient_widgets/gradient_widgets.dart';
 import 'package:intl/intl.dart';
@@ -116,18 +116,21 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
 
   Future fetchRides() async {
     rides = await RidesDatabase.instance.getAllRides();
-    dateTime = DateTime.fromMillisecondsSinceEpoch(rides[0].createdTime!);
-    for (int i = 0; i < rides.length; i++) {
-      print("carbonSavings : ${rides[i].carbonSavings}");
-      print("distance : ${rides[i].distance}");
-      totalDistance = totalDistance + rides[i].distance;
-      totalCO2 = totalCO2 + rides[i].carbonSavings;
-      // print("CO2 ${totalCO2}");
-      print("Distance+++ ${totalDistance}");
+    print("rides ${rides.length}");
+    if (rides.length != 0) {
+      dateTime = DateTime.fromMillisecondsSinceEpoch(rides[0].createdTime!);
+      for (int i = 0; i < rides.length; i++) {
+        print("carbonSavings : ${rides[i].carbonSavings}");
+        print("distance : ${rides[i].distance}");
+        totalDistance = totalDistance + rides[i].distance;
+        totalCO2 = totalCO2 + rides[i].carbonSavings;
+        // print("CO2 ${totalCO2}");
+        print("Distance+++ ${totalDistance}");
+      }
+      print("totalCO2 ${totalCO2}");
+      print("totalDistance ${totalDistance}");
+      setState(() {});
     }
-    print("totalCO2 ${totalCO2}");
-    print("totalDistance ${totalDistance}");
-    setState(() {});
   }
 
   double calculateCO2(double rideDistance) {
@@ -850,7 +853,7 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
                                   'Niion App collects location data to enable you to track your rides even when app is in background, which also allow you to track battery life accurately. Location data is also used to share weather information.',
                                   style: TextStyle(fontSize: 16),
                                   overflow: TextOverflow.ellipsis,
-                                  maxLines:7,
+                                  maxLines: 7,
                                 ),
                                 SizedBox(
                                   height: 10,
@@ -888,7 +891,8 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
                                             weather = await getWeather(
                                                 position.latitude,
                                                 position.longitude);
-                                            weatherDialog = await getLocal(weatherDialogKEY);
+                                            weatherDialog = await getLocal(
+                                                weatherDialogKEY);
                                             isDiaload = false;
                                             setState(() {});
                                           }

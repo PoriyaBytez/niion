@@ -18,6 +18,7 @@ class RideFields {
   static const String ride_lat = 'ride_lat';
   static const String ride_lon = 'ride_lon';
 
+  // static const String notification_id = 'notification_id';
   static const String message = 'message';
 
   static final List<String> tbRideColumns = [
@@ -27,7 +28,8 @@ class RideFields {
     avgSpeed,
     carbonSavings,
     polylines,
-    createdTime,address
+    createdTime,
+    address
   ];
 
   static final List<String> tbPolylineColumns = [
@@ -37,44 +39,41 @@ class RideFields {
   ];
 }
 
-class NotificationPojo{
-   int? id;
-   int? createdTime;
-   String? message;
+class NotificationPojo {
+  int? id;
+  int? createdTime;
+  String? message;
 
-   NotificationPojo({ this.id,this.createdTime, this.message});
+  NotificationPojo({this.id, this.createdTime, this.message});
 
+  NotificationPojo copy(
+          {int? id, required int createdTime, required String message}) =>
+      NotificationPojo(
+        id: id ?? this.id,
+        createdTime: createdTime,
+        message: message,
+      );
 
-   NotificationPojo copy(
-       {int? id, required int createdTime ,required String message}) =>
-       NotificationPojo(
-         id: id ?? this.id,
-         createdTime: createdTime,
-         message: message,
-       );
+  static NotificationPojo fromJson(
+      Map<String, Object?> jsonRide, List<Map<String, Object?>>? jsonPolyline) {
+    return NotificationPojo(
+        id: jsonRide[RideFields.id] as int?,
+        createdTime: jsonRide[RideFields.createdTime] as int,
+        message: jsonRide[RideFields.message] as String);
+  }
 
-   static NotificationPojo fromJson(
-       Map<String, Object?> jsonRide, List<Map<String, Object?>>? jsonPolyline) {
-     return NotificationPojo(
-         id: jsonRide[RideFields.id] as int?,
-         createdTime: jsonRide[RideFields.createdTime] as int,
-         message: jsonRide[RideFields.message] as String);
-   }
-
-
-   Map<String, Object?> toJson() => {
-     RideFields.id :id,
-     RideFields.createdTime: createdTime,
-     RideFields.message: message,
-   };
-
+  Map<String, Object?> toJson() => {
+        RideFields.id: id,
+        RideFields.createdTime: createdTime,
+        RideFields.message: message,
+      };
 }
 
 class RidePojo {
   final int? id, duration, createdTime;
   final double distance, avgSpeed, carbonSavings;
   final List<LatLng> polylines;
-  final String address ;
+  final String address;
 
   const RidePojo({
     this.id,
@@ -94,7 +93,8 @@ class RidePojo {
           required double avgSpeed,
           required double carbonSavings,
           required List<LatLng> polylines,
-          required int createdTime ,required String address}) =>
+          required int createdTime,
+          required String address}) =>
       RidePojo(
         id: id ?? this.id,
         duration: duration,

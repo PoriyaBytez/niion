@@ -49,6 +49,14 @@ class RidesDatabase {
     ${RideFields.ride_lon} $doubleType 
     )
     ''');
+
+    await db.execute('''
+    CREATE TABLE $tableNotification(
+    ${RideFields.id} $idType, 
+    ${RideFields.createdTime} $numberType, 
+    ${RideFields.message} $textTypeNull 
+    )
+    ''');
   }
 
   Future<int?> createRide(RidePojo ridePojo) async {
@@ -64,6 +72,26 @@ class RidesDatabase {
     }
     await batch.commit(noResult: true);
     return id;
+  }
+
+  Future<int?> createNotification(NotificationPojo notificationPojo) async {
+    final db = await instance.database;
+    final id = await db?.insert(tableNotification, notificationPojo.toJson());
+    print("id $id");
+    return id;
+  }
+
+  Future<List<NotificationPojo>> getAllNotificationList() async {
+    final db = await instance.database;
+    const orderBy = '${RideFields.createdTime} DESC';
+    final result = await db!.query(tableNotification, orderBy: orderBy);
+    return result.map((json) => NotificationPojo.fromJson(json, null)).toList();
+  }
+
+  Future<int> deleteNotification(int id) async {
+    final db = await instance.database;
+    return db!.delete(tableNotification,
+        where: '${RideFields.id} = ?', whereArgs: [id]);
   }
 
   Future<RidePojo> getRide(int id) async {
@@ -94,7 +122,8 @@ class RidesDatabase {
 
   Future<double> getTotalCarbonSavings() async {
     final db = await instance.database;
-    final result = await db!.rawQuery("SELECT SUM(${RideFields.carbonSavings}) FROM $tableRides");
+    final result = await db!
+        .rawQuery("SELECT SUM(${RideFields.carbonSavings}) FROM $tableRides");
     return result[0]["SUM(${RideFields.carbonSavings})"] as double;
   }
 
